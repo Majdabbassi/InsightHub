@@ -1,0 +1,96 @@
+<section class="performers-section">
+  <div class="performers-header">
+    <div>
+      <h2>Top/Bottom Performers</h2>
+      <p class="performers-subtitle">Best and worst categories ranked by numeric totals.</p>
+    </div>
+    <button type="button" class="refresh-btn" (click)="load()" [disabled]="loading()">Rerank</button>
+  </div>
+
+  @if (loading()) {
+    <div class="state-block">
+      <span class="spinner"></span>
+      <p>Ranking performers…</p>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="alert" role="alert">{{ errorMessage() }}</div>
+  } @else {
+    @if (pairs().length === 0 && skippedReasons().length === 0) {
+      <div class="empty-placeholder">
+        <span class="empty-icon">🏆</span>
+        <p><strong>Nothing to rank yet</strong></p>
+      </div>
+    } @else if (pairs().length === 0) {
+      <div class="empty-placeholder">
+        <span class="empty-icon">🏆</span>
+        <p><strong>Not enough categorical data to rank performers</strong></p>
+        <ul class="skip-reasons">
+          @for (reason of skippedReasons(); track reason) {
+            <li>{{ reason }}</li>
+          }
+        </ul>
+      </div>
+    } @else {
+      <div class="performers-grid">
+        @for (pair of pairs(); track pair.numericColumn + '-' + pair.categoricalColumn) {
+          <article class="performers-card">
+            <header class="card-head">
+              <h3>{{ pair.numericColumn }} by {{ pair.categoricalColumn }}</h3>
+              <span class="agg-chip">{{ pair.aggregation }}</span>
+            </header>
+
+            @if (pair.isDominant) {
+              <div class="dominant-callout">
+                ⚠ {{ pair.topPerformers[0].category }} accounts for
+                {{ pair.dominantPercentage }}% of total {{ pair.numericColumn }}
+              </div>
+            }
+
+            <div class="rank-columns">
+              <div class="rank-col top-col">
+                <span class="col-title"><span class="col-icon up">▲</span> Top</span>
+                @for (entry of pair.topPerformers; track entry.category) {
+                  <div class="rank-row">
+                    <span class="rank-name">{{ entry.category }}</span>
+                    <span class="rank-bar-track">
+                      <span class="rank-bar" [style.width.%]="entryWidth(entry, pair.topPerformers)"></span>
+                    </span>
+                    <span class="rank-value">{{ formatNumber(entry.sumValue) }}</span>
+                  </div>
+                  <span class="rank-avg">avg {{ formatNumber(entry.avgValue) }} · rank #{{ entry.rank }}</span>
+                }
+              </div>
+              <div class="rank-col bottom-col">
+                <span class="col-title"><span class="col-icon down">▼</span> Bottom</span>
+                @for (entry of pair.bottomPerformers; track entry.category) {
+                  <div class="rank-row">
+                    <span class="rank-name">{{ entry.category }}</span>
+                    <span class="rank-bar-track">
+                      <span class="rank-bar" [style.width.%]="entryWidth(entry, pair.bottomPerformers)"></span>
+                    </span>
+                    <span class="rank-value">{{ formatNumber(entry.sumValue) }}</span>
+                  </div>
+                  <span class="rank-avg">avg {{ formatNumber(entry.avgValue) }} · rank #{{ entry.rank }}</span>
+                }
+              </div>
+            </div>
+
+            <p class="gap-line" [class.gap-muted]="pair.gap === null">
+              {{ formatGap(pair.gap) }}
+            </p>
+
+            <p class="summary">{{ pair.summary }}</p>
+
+            @if (pair.note) {
+              <p class="pair-note">{{ pair.note }}</p>
+            }
+          </article>
+        }
+      </div>
+
+      @if (skippedReasons().length > 0) {
+        <p class="skipped-note">{{ skippedReasons().join(' · ') }}</p>
+      }
+    }
+  }
+</section>

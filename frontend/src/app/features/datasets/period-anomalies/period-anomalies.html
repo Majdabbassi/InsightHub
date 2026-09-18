@@ -1,0 +1,101 @@
+<section class="anomalies-section">
+  <div class="anomalies-header">
+    <div>
+      <h2>Anomalies</h2>
+      <p class="anomalies-subtitle">Time periods that deviate unusually from the norm.</p>
+    </div>
+    <button type="button" class="refresh-btn" (click)="load()" [disabled]="loading()">Rescan</button>
+  </div>
+
+  @if (loading()) {
+    <div class="state-block">
+      <span class="spinner"></span>
+      <p>Scanning for unusual periods…</p>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="alert" role="alert">{{ errorMessage() }}</div>
+  } @else {
+    @if (anomalies().length === 0 && skippedReasons().length === 0) {
+      <div class="all-clear">
+        <span class="clear-icon">✓</span>
+        <div>
+          <p class="clear-title">No unusual periods detected</p>
+          <p class="clear-subtitle">Your data looks steady across all tracked periods.</p>
+        </div>
+      </div>
+    } @else if (anomalies().length === 0) {
+      <div class="empty-placeholder">
+        <span class="empty-icon">🔍</span>
+        <p><strong>Nothing to scan yet</strong></p>
+        <ul class="skip-reasons">
+          @for (reason of skippedReasons(); track reason) {
+            <li>{{ reason }}</li>
+          }
+        </ul>
+      </div>
+    } @else {
+      <div class="anomaly-grid">
+        @for (a of anomalies(); track a.column + '-' + a.periodLabel) {
+          <article
+            class="anomaly-card"
+            [class.severe]="a.severity === 'SEVERE'"
+            [class.moderate]="a.severity === 'MODERATE'">
+            <header class="card-head">
+              <span class="direction-icon" [class.spike]="isSpike(a.direction)" [class.drop]="!isSpike(a.direction)">
+                {{ isSpike(a.direction) ? '⚡' : '📉' }}
+              </span>
+              <h3>{{ a.column }}</h3>
+              <span class="severity-badge" [class.badge-severe]="a.severity === 'SEVERE'" [class.badge-moderate]="a.severity === 'MODERATE'">
+                {{ a.severity }}
+              </span>
+            </header>
+
+            <p class="period-meta">
+              <strong>{{ a.periodLabel }}</strong>
+              <span class="grouping-chip">{{ a.periodGrouping }}</span>
+              <span class="meta-note">by {{ a.temporalColumn }}</span>
+            </p>
+
+            <div class="numbers-row">
+              <span class="num actual">{{ formatNumber(a.actualValue) }}</span>
+              <span class="vs">vs</span>
+              <span class="num typical">{{ formatNumber(a.typicalValue) }} typical</span>
+            </div>
+
+            <p class="multiplier" [class.spike-mult]="isSpike(a.direction)" [class.drop-mult]="!isSpike(a.direction)">
+              {{ formatMultiplier(a.multiplier) }}
+            </p>
+
+            <p class="summary">{{ a.summary }}</p>
+
+            @if (a.topDrivers.length > 0) {
+              <div class="drivers">
+                <span class="drivers-title">What drove it</span>
+                @for (driver of a.topDrivers; track driver.categoryColumn + '-' + driver.categoryValue) {
+                  <div class="driver-row">
+                    <span class="driver-name">{{ driver.categoryValue }}</span>
+                    <span class="driver-bar-track">
+                      <span
+                        class="driver-bar"
+                        [style.width.%]="driverWidth(driver, a.topDrivers)"
+                        [class.positive]="driverShift(driver) >= 0"
+                        [class.negative]="driverShift(driver) < 0"></span>
+                    </span>
+                    <span class="driver-nums">{{ formatNumber(driver.periodValue) }} / {{ formatNumber(driver.typicalValue) }}</span>
+                  </div>
+                  <span class="driver-column-note">{{ driver.categoryColumn }}</span>
+                }
+              </div>
+            }
+
+            <p class="z-note">z-score {{ a.zScore > 0 ? '+' : '' }}{{ a.zScore }} · {{ a.periodGrouping }}ly totals vs all other periods</p>
+          </article>
+        }
+      </div>
+
+      @if (skippedReasons().length > 0) {
+        <p class="skipped-note">{{ skippedReasons().join(' · ') }}</p>
+      }
+    }
+  }
+</section>

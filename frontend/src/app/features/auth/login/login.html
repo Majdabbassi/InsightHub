@@ -1,0 +1,52 @@
+<section class="auth-card">
+  <h1>Welcome back</h1>
+  <p class="subtitle">Sign in to your analytics workspace</p>
+
+  @if (errorMessage()) {
+    <div class="alert" role="alert">{{ errorMessage() }}</div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+    <div class="field">
+      <label for="email">Email</label>
+      <input
+        id="email"
+        type="email"
+        formControlName="email"
+        placeholder="you@example.com"
+        autocomplete="email"
+      />
+      @if (form.controls.email.touched && form.controls.email.invalid) {
+        <span class="field-error">
+          @if (form.controls.email.hasError('required')) {
+            Email is required.
+          } @else {
+            Enter a valid email address.
+          }
+        </span>
+      }
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <input
+        id="password"
+        type="password"
+        formControlName="password"
+        placeholder="Your password"
+        autocomplete="current-password"
+      />
+      @if (form.controls.password.touched && form.controls.password.invalid) {
+        <span class="field-error">Password is required.</span>
+      }
+    </div>
+
+    <button type="submit" [disabled]="loading()">
+      {{ loading() ? 'Signing in…' : 'Sign in' }}
+    </button>
+  </form>
+
+  <p class="switch-link">
+    No account yet? <a routerLink="/register">Create one</a>
+  </p>
+</section>

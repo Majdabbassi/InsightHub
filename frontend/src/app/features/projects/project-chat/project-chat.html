@@ -1,0 +1,97 @@
+<button
+  type="button"
+  class="chat-fab"
+  (click)="toggle()"
+  [attr.aria-expanded]="open()"
+  aria-label="Toggle AI assistant">
+  @if (!open()) {
+    <ui-icon name="sparkles" [size]="20" />
+    <span>AI Assistant</span>
+  } @else {
+    <ui-icon name="x" [size]="20" />
+    <span>Close</span>
+  }
+</button>
+
+@if (open()) {
+  <aside class="chat-panel">
+    <header class="chat-header">
+      <div class="chat-title">
+        <ui-icon name="sparkles" [size]="16" />
+        <h3>AI Assistant</h3>
+      </div>
+      <div class="chat-header-actions">
+        @if (messages().length > 0) {
+          @if (confirmingClear()) {
+            <button type="button" class="chat-clear-confirm" (click)="confirmClear()">
+              Clear history?
+            </button>
+            <button type="button" class="chat-clear-cancel" (click)="cancelClear()">No</button>
+          } @else {
+            <button type="button" class="chat-clear" (click)="requestClear()" title="Clear conversation">
+              Clear
+            </button>
+          }
+        }
+      </div>
+    </header>
+
+    <div #scrollContainer class="chat-messages">
+      @if (loadingHistory()) {
+        <p class="chat-note">Loading conversation...</p>
+      }
+      @if (!loadingHistory() && messages().length === 0) {
+        <p class="chat-note chat-intro">
+          Ask me anything about this project: dataset quality, cleaning history,
+          or relationships between datasets.
+        </p>
+      }
+      @for (message of messages(); track message.id) {
+        <div class="chat-bubble-row" [class.from-user]="message.role === 'user'">
+          <div class="chat-bubble">{{ message.content }}</div>
+          @if (message.usedSql && message.role === 'assistant') {
+            <button
+              type="button"
+              class="chat-sql-toggle"
+              (click)="toggleSql(message)">
+              {{ expandedSqlIds().has(message.id) ? 'Hide query used' : 'Show query used' }}
+            </button>
+            @if (expandedSqlIds().has(message.id)) {
+              <pre class="chat-sql-block">{{ message.usedSql }}</pre>
+            }
+          }
+        </div>
+      }
+      @if (sending()) {
+        <div class="chat-bubble-row">
+          <div class="chat-bubble chat-bubble-thinking">
+            Thinking... (local model, this can take a few seconds)
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (error()) {
+      <p class="chat-error">{{ error() }}</p>
+    }
+
+    <footer class="chat-input-row">
+      <input
+        type="text"
+        placeholder="Ask about this project..."
+        [ngModel]="draft()"
+        (ngModelChange)="draft.set($event)"
+        (keydown.enter)="send()"
+        [disabled]="sending()"
+        aria-label="Message the AI assistant" />
+      <button
+        type="button"
+        class="chat-send"
+        (click)="send()"
+        [disabled]="sending() || !draft().trim()"
+        aria-label="Send message">
+        <ui-icon name="arrowUp" [size]="18" />
+      </button>
+    </footer>
+  </aside>
+}

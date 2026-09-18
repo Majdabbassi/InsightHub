@@ -1,0 +1,69 @@
+<section class="form-page">
+  <a routerLink="/projects" class="back-link">← Back to projects</a>
+
+  <div class="form-card">
+    @if (editing()) {
+      <h1>Edit project</h1>
+    } @else {
+      <h1>New project</h1>
+    }
+    <p class="subtitle">
+      @if (editing()) {
+        Update the details of your project.
+      } @else {
+        Projects hold your datasets, dashboards and insights.
+      }
+    </p>
+
+    @if (errorMessage()) {
+      <div class="alert" role="alert">{{ errorMessage() }}</div>
+    }
+
+    @if (loading()) {
+      <p class="muted">Loading project…</p>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+        <div class="field">
+          <label for="name">Name</label>
+          <input
+            id="name"
+            type="text"
+            formControlName="name"
+            placeholder="e.g. Q3 Sales Analysis"
+            maxlength="100"
+          />
+          @if (form.controls.name.touched && form.controls.name.invalid) {
+            <span class="field-error">
+              @if (form.controls.name.hasError('required')) {
+                Project name is required.
+              } @else {
+                Name must not exceed 100 characters.
+              }
+            </span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="description">Description <span class="optional">(optional)</span></label>
+          <textarea
+            id="description"
+            formControlName="description"
+            rows="4"
+            placeholder="What is this project about?"
+            maxlength="1000"
+          ></textarea>
+          @if (form.controls.description.touched && form.controls.description.invalid) {
+            <span class="field-error">Description must not exceed 1000 characters.</span>
+          }
+        </div>
+
+        <div class="form-actions">
+          <a routerLink="/projects" class="btn-secondary">Cancel</a>
+          <button type="submit" [disabled]="saving()">
+            {{ saving() ? 'Saving…' : editing() ? 'Save changes' : 'Create project' }}
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</section>

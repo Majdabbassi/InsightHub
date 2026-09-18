@@ -1,0 +1,94 @@
+<div class="shell" [class.nav-collapsed]="collapsed()" [class.mobile-open]="mobileOpen()">
+  <button
+    type="button"
+    class="mobile-scrim"
+    (click)="toggleMobile()"
+    [attr.aria-hidden]="!mobileOpen()"
+    tabindex="-1"
+  ></button>
+
+  <button type="button" class="menu-toggle" (click)="toggleMobile()" title="Toggle navigation" aria-label="Toggle navigation">
+    <ui-icon name="menu" [size]="20" />
+  </button>
+
+  <aside class="sidebar" [attr.aria-label]="'Primary navigation'">
+    <a class="brand" routerLink="/dashboard" title="Data Analytics">
+      <span class="brand-mark"><ui-icon name="chart" [size]="18" /></span>
+      <span class="label brand-text">Data Analytics</span>
+    </a>
+
+    <nav class="nav" aria-label="Main">
+      <a class="nav-item" routerLink="/dashboard" routerLinkActive="active" title="Home">
+        <ui-icon name="dashboard" [size]="18" />
+        <span class="label">Home</span>
+      </a>
+      <a class="nav-item" routerLink="/projects" routerLinkActive="active" title="Projects">
+        <ui-icon name="folder" [size]="18" />
+        <span class="label">Projects</span>
+      </a>
+
+      <div class="ctx-group">
+        <div class="ctx-divider label">Project</div>
+        @if (projectId()) {
+          <a
+            class="nav-item ctx"
+            [routerLink]="['/projects', projectId()]"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            [title]="projectName()"
+          >
+            <ui-icon name="file" [size]="16" />
+            <span class="label ctx-name">{{ projectName() }}</span>
+          </a>
+
+          @if (datasetId()) {
+            <div class="ctx-divider label">Dataset</div>
+            <a
+              class="nav-item ctx"
+              [routerLink]="['/projects', projectId(), 'datasets', datasetId()]"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }"
+              [title]="datasetName()"
+            >
+              <ui-icon name="table" [size]="16" />
+              <span class="label ctx-name">{{ datasetName() }}</span>
+            </a>
+          }
+        } @else {
+          <div class="ctx-empty label">No project open</div>
+        }
+      </div>
+    </nav>
+
+    <div class="user-box">
+      <span class="avatar" aria-hidden="true">{{ initial() }}</span>
+      <span class="who label">
+        <span class="name">{{ user()?.fullName }}</span>
+        <span class="role">{{ user()?.role }}</span>
+      </span>
+      <button
+        type="button"
+        class="signout"
+        (click)="signOut()"
+        title="Sign out"
+        aria-label="Sign out"
+      >
+        <ui-icon name="logout" [size]="16" />
+      </button>
+    </div>
+
+    <button
+      type="button"
+      class="collapse-btn"
+      (click)="toggleCollapsed()"
+      [title]="collapsed() ? 'Expand navigation' : 'Collapse navigation'"
+      [attr.aria-label]="collapsed() ? 'Expand navigation' : 'Collapse navigation'"
+    >
+      <ui-icon [name]="collapsed() ? 'chevronRight' : 'chevronLeft'" [size]="14" />
+    </button>
+  </aside>
+
+  <main class="shell-content">
+    <router-outlet />
+  </main>
+</div>

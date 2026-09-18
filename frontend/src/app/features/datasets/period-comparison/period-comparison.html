@@ -1,0 +1,124 @@
+<section class="comparison-section">
+  <div class="comparison-header">
+    <div>
+      <h2>Period Comparison</h2>
+      <p class="comparison-subtitle">How the most recent complete period stacks up against the one before it.</p>
+    </div>
+    <button type="button" class="btn-analyze" (click)="toggleCustom()">
+      {{ customOpen() ? 'Close custom range' : 'Compare custom range' }}
+    </button>
+  </div>
+
+  @if (customOpen()) {
+    <div class="custom-range-panel">
+      <div class="range-group">
+        <span class="range-title">Current period</span>
+        <label>Start <input type="date" [value]="currentStart()" (input)="onDateChange('currentStart', $event)" /></label>
+        <label>End <input type="date" [value]="currentEnd()" (input)="onDateChange('currentEnd', $event)" /></label>
+      </div>
+      <div class="range-group">
+        <span class="range-title">Previous period</span>
+        <label>Start <input type="date" [value]="previousStart()" (input)="onDateChange('previousStart', $event)" /></label>
+        <label>End <input type="date" [value]="previousEnd()" (input)="onDateChange('previousEnd', $event)" /></label>
+      </div>
+      <div class="range-actions">
+        <button type="button" class="apply-btn" (click)="applyCustom()">Apply ranges</button>
+        <button type="button" class="reset-btn" (click)="useAutomatic()">Back to automatic</button>
+      </div>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="state-block">
+      <span class="spinner"></span>
+      <p>Comparing periods…</p>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="alert" role="alert">{{ errorMessage() }}</div>
+  } @else if (result(); as r) {
+    @if (r.comparisons.length === 0) {
+      <div class="empty-placeholder">
+        <span class="empty-icon">📆</span>
+        <p><strong>Not enough time-based data to compare periods</strong></p>
+        @if (r.skippedReasons.length > 0) {
+          <ul class="skip-reasons">
+            @for (reason of r.skippedReasons; track reason) {
+              <li>{{ reason }}</li>
+            }
+          </ul>
+        }
+      </div>
+    } @else {
+      <p class="period-labels">
+        Comparing <strong>{{ r.previousLabel }}</strong> →
+        <strong>{{ r.currentLabel }}</strong>
+        <span class="period-type-chip">{{ r.periodType }}</span>
+      </p>
+
+      <div class="comparison-grid">
+        @for (c of r.comparisons; track c.column) {
+          <article class="comparison-card">
+            <header class="card-head">
+              <h3>{{ c.column }}</h3>
+              <span
+                class="delta-badge"
+                [class.increase]="isIncrease(c.delta)"
+                [class.decrease]="!isIncrease(c.delta)">
+                {{ formatDelta(c.delta) }}
+              </span>
+            </header>
+
+            <div class="numbers-row">
+              <span class="num before">{{ formatNumber(c.previousValue) }}</span>
+              <span class="arrow" aria-hidden="true">→</span>
+              <span class="num after">{{ formatNumber(c.currentValue) }}</span>
+              <span
+                class="percent"
+                [class.up]="isIncrease(c.delta)"
+                [class.down]="!isIncrease(c.delta)">
+                {{ formatPercent(c.percentChange) }}
+              </span>
+            </div>
+
+            <p class="summary">{{ c.summary }}</p>
+
+            @if (c.topDrivers.length > 0) {
+              <div class="drivers">
+                <span class="drivers-title">Top movers</span>
+                @for (driver of c.topDrivers; track driver.categoryColumn + '-' + driver.categoryValue) {
+                  <div class="driver-row">
+                    <span class="driver-name">{{ driver.categoryValue }}</span>
+                    <span class="driver-bar-track">
+                      <span
+                        class="driver-bar"
+                        [style.width.%]="driverWidth(driver, c.topDrivers)"
+                        [class.positive]="driver.delta >= 0"
+                        [class.negative]="driver.delta < 0"></span>
+                    </span>
+                    <span
+                      class="driver-delta"
+                      [class.up]="driver.delta >= 0"
+                      [class.down]="driver.delta < 0">
+                      {{ formatDelta(driver.delta) }}
+                    </span>
+                  </div>
+                  <span class="driver-column-note">{{ driver.categoryColumn }}</span>
+                }
+              </div>
+            }
+
+            @if (c.lowConfidence) {
+              <p class="low-confidence">⚠ Low confidence — one of the periods has fewer than 5 rows.</p>
+            }
+          </article>
+        }
+      </div>
+
+      @if (r.skippedReasons.length > 0) {
+        <p class="skipped-note">
+          {{ r.skippedReasons.join(' · ') }}
+        </p>
+      }
+    }
+  }
+</section>

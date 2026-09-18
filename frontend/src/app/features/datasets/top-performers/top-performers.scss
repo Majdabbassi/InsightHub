@@ -1,0 +1,253 @@
+.performers-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--line);
+}
+
+.performers-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+}
+
+.performers-subtitle {
+  margin: 0.2rem 0 0;
+  color: var(--ink-3);
+  font-size: 0.85rem;
+}
+
+.refresh-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink-2);
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.state-block {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--ink-3);
+
+  p {
+    margin-top: 1rem;
+  }
+}
+
+.spinner {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.skip-reasons {
+  margin: 0.75rem auto 0;
+  padding-left: 1.1rem;
+  color: var(--ink-3);
+  font-size: 0.85rem;
+  text-align: left;
+  max-width: 480px;
+
+  li + li {
+    margin-top: 0.25rem;
+  }
+}
+
+.skipped-note {
+  margin: 0.9rem 0 0;
+  color: var(--ink-3);
+  font-size: 0.8rem;
+}
+
+.performers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1rem;
+}
+
+.performers-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 1.1rem 1.2rem;
+
+  &:hover {
+    border-color: var(--accent-line);
+  }
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+    word-break: break-word;
+  }
+}
+
+.agg-chip {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(129, 140, 248, 0.1);
+  border-radius: 999px;
+  padding: 0.18rem 0.6rem;
+  white-space: nowrap;
+}
+
+.dominant-callout {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn);
+  color: var(--warn);
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  margin-bottom: 0.85rem;
+}
+
+.rank-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.col-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.55rem;
+  color: var(--ink-2);
+
+  .col-icon {
+    font-size: 0.7rem;
+
+    &.up {
+      color: var(--pos);
+    }
+
+    &.down {
+      color: var(--neg);
+    }
+  }
+}
+
+.top-col .col-title {
+  color: var(--pos);
+}
+
+.bottom-col .col-title {
+  color: var(--neg);
+}
+
+.rank-row {
+  display: grid;
+  grid-template-columns: minmax(52px, 76px) 1fr auto;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.25rem;
+
+  .rank-name {
+    font-size: 0.82rem;
+    color: var(--ink-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .rank-bar-track {
+    height: 7px;
+    background: var(--fill-subtle);
+    border-radius: 999px;
+    overflow: hidden;
+    display: block;
+  }
+
+  .rank-bar {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+  }
+
+  .rank-value {
+    font-size: 0.78rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+}
+
+.top-col .rank-bar {
+  background: var(--pos);
+}
+
+.bottom-col .rank-bar {
+  background: var(--neg);
+}
+
+.rank-avg {
+  display: block;
+  margin: -0.15rem 0 0.5rem calc(76px + 0.45rem);
+  font-size: 0.66rem;
+  color: var(--ink-faint);
+}
+
+.gap-line {
+  margin: 0.35rem 0 0.7rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--ink);
+
+  &.gap-muted {
+    color: var(--ink-3);
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+}
+
+.summary {
+  margin: 0 0 0.6rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.pair-note {
+  margin: 0;
+  font-size: 0.74rem;
+  color: var(--ink-3);
+}

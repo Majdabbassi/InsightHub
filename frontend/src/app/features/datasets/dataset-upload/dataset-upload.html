@@ -1,0 +1,33 @@
+<div
+  class="dropzone"
+  [class.drag-over]="dragOver()"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+  (drop)="onDrop($event)"
+>
+  @if (!uploading()) {
+    <p class="drop-title">Drag &amp; drop your CSV here</p>
+    <p class="drop-hint">or</p>
+    <label class="btn-picker" for="dataset-file-input">
+      Choose a CSV file
+      <input
+        id="dataset-file-input"
+        type="file"
+        accept=".csv,text/csv"
+        (change)="onFileSelected($event)"
+      />
+    </label>
+    <p class="drop-limit">CSV only · max 20 MB</p>
+  } @else {
+    <div class="progress-wrap">
+      <p>Uploading… {{ progress() }}%</p>
+      <div class="progress-track">
+        <div class="progress-fill" [style.width.%]="progress()"></div>
+      </div>
+    </div>
+  }
+</div>
+
+@if (errorMessage()) {
+  <div class="upload-error" role="alert">{{ errorMessage() }}</div>
+}

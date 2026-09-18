@@ -1,0 +1,147 @@
+.trends-section {
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--line);
+}
+
+.trends-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+}
+
+.trends-subtitle {
+  margin: 0.2rem 0 0;
+  color: var(--ink-3);
+  font-size: 0.85rem;
+}
+
+.trend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.trend-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 1.1rem 1.2rem;
+
+  &.strength-noisy {
+    opacity: 0.85;
+    background: var(--surface-subtle);
+  }
+
+  &:hover {
+    border-color: var(--accent-line);
+  }
+}
+
+.trend-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.6rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+    word-break: break-word;
+    flex: 1;
+  }
+}
+
+.direction-icon {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 1rem;
+  font-weight: 700;
+  flex-shrink: 0;
+
+  .dir-increasing & {
+    color: var(--pos);
+    background: rgba(22, 163, 74, 0.12);
+  }
+
+  .dir-decreasing & {
+    color: var(--neg);
+    background: rgba(220, 38, 38, 0.12);
+  }
+
+  .dir-stable & {
+    color: var(--ink-3);
+    background: rgba(107, 114, 128, 0.14);
+  }
+}
+
+.strength-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  white-space: nowrap;
+
+  &.badge-clear {
+    color: var(--pos);
+    background: var(--pos-bg);
+  }
+
+  &.badge-moderate {
+    color: var(--warn);
+    background: var(--warn-bg);
+  }
+
+  &.badge-noisy {
+    color: var(--ink-3);
+    background: var(--fill-subtle);
+    border: 1px dashed var(--line-strong);
+  }
+}
+
+.trend-summary {
+  margin: 0 0 0.75rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.spark-wrap {
+  position: relative;
+  height: 90px;
+  margin-bottom: 0.6rem;
+}
+
+.trend-meta {
+  color: var(--ink-3);
+  font-size: 0.78rem;
+}
+
+.skip-reasons {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--ink-3);
+  font-size: 0.88rem;
+
+  li + li {
+    margin-top: 0.25rem;
+  }
+}
+
+.skipped-note {
+  margin: 0.9rem 0 0;
+  color: var(--ink-3);
+  font-size: 0.8rem;
+}

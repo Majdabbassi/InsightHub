@@ -1,0 +1,84 @@
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  border: 2px dashed var(--accent-line);
+  border-radius: 14px;
+  background: var(--surface-subtle);
+  text-align: center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+
+  &.drag-over {
+    border-color: var(--accent);
+    background: var(--accent-tint);
+  }
+
+  .drop-title {
+    margin: 0;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .drop-hint {
+    margin: 0;
+    color: var(--ink-3);
+    font-size: 0.85rem;
+  }
+
+  .drop-limit {
+    margin: 0.25rem 0 0;
+    color: var(--ink-3);
+    font-size: 0.78rem;
+  }
+
+  input[type='file'] {
+    display: none;
+  }
+
+  .btn-picker {
+    padding: 0.55rem 1.1rem;
+    border-radius: 10px;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--accent-hover);
+    }
+  }
+}
+
+.progress-wrap {
+  width: min(360px, 100%);
+
+  p {
+    margin: 0 0 0.6rem;
+  }
+
+  .progress-track {
+    height: 10px;
+    border-radius: 999px;
+    background: var(--line);
+    overflow: hidden;
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--accent);
+      transition: width 0.2s ease;
+    }
+  }
+}
+
+.upload-error {
+  margin-top: 0.75rem;
+  background: var(--neg-bg);
+  border: 1px solid var(--neg-line);
+  color: var(--neg);
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.88rem;
+}

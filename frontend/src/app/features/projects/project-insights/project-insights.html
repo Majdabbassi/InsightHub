@@ -1,0 +1,165 @@
+<div class="project-insights">
+  <section class="insights-subsection" data-testid="dataset-comparisons">
+    <h3>Dataset Comparisons</h3>
+    <p class="subsection-hint">
+      Datasets that share the same structure compared side by side, like two
+      months of one report.
+    </p>
+
+    @if (siblingRelationships().length === 0) {
+      <div class="empty-state">
+        <p>No comparable datasets found yet — datasets with matching structure will appear here for comparison.</p>
+      </div>
+    } @else {
+      <div class="cards">
+        @for (rel of siblingRelationships(); track rel.id) {
+          <article class="sibling-card" [attr.data-rel-id]="rel.id">
+            <header class="card-head">
+              <h4>{{ rel.datasetAName }} <span class="vs">vs</span> {{ rel.datasetBName }}</h4>
+              @if (rel.matchPercentage !== null) {
+                <span class="overlap-chip">{{ rel.matchPercentage }}% schema match</span>
+              }
+            </header>
+
+            @if (rel.status === 'SUGGESTED') {
+              <div class="confirm-prompt">
+                <p>This pair was flagged as siblings but isn't confirmed yet.</p>
+                <button
+                  type="button"
+                  class="btn-primary"
+                  (click)="confirmSibling(rel)"
+                  [disabled]="confirmingId() === rel.id"
+                >
+                  {{ confirmingId() === rel.id ? 'Confirming…' : 'Confirm to compare' }}
+                </button>
+              </div>
+            } @else {
+              @let state = comparisons()[rel.id];
+              @if (state?.loading) {
+                <div class="mini-state"><span class="spinner"></span> Comparing datasets…</div>
+              } @else if (state?.error) {
+                <p class="alert" role="alert">{{ state!.error }}</p>
+              } @else if (state?.result; as result) {
+                @if (result.comparisons.length === 0) {
+                  <p class="skipped-note">
+                    @if (result.skippedReasons.length > 0) {
+                      {{ result.skippedReasons.join(' · ') }}
+                    } @else {
+                      Nothing comparable between these two datasets.
+                    }
+                  </p>
+                } @else {
+                  <p class="labels-row">
+                    Baseline <strong>{{ result.datasetALabel }}</strong> →
+                    <strong>{{ result.datasetBLabel }}</strong>
+                  </p>
+                  <div class="comparison-grid">
+                    @for (c of result.comparisons; track c.column) {
+                      <div class="column-block">
+                        <div class="block-head">
+                          <span class="column-name">{{ c.column }}</span>
+                          <span
+                            class="delta-badge"
+                            [class.increase]="isIncrease(c.delta)"
+                            [class.decrease]="!isIncrease(c.delta)"
+                          >{{ formatDelta(c.delta) }}</span>
+                        </div>
+                        <div class="numbers-row">
+                          <span class="num before">{{ formatNumber(c.previousValue) }}</span>
+                          <span class="arrow" aria-hidden="true">→</span>
+                          <span class="num after">{{ formatNumber(c.currentValue) }}</span>
+                          <span
+                            class="percent"
+                            [class.up]="isIncrease(c.delta)"
+                            [class.down]="!isIncrease(c.delta)"
+                          >{{ formatPercent(c.percentChange) }}</span>
+                        </div>
+                        <p class="summary">{{ c.summary }}</p>
+
+                        @if (c.topDrivers.length > 0) {
+                          <div class="drivers">
+                            <span class="drivers-title">Top movers</span>
+                            @for (driver of c.topDrivers; track driver.categoryColumn + '-' + driver.categoryValue) {
+                              <div class="driver-row">
+                                <span class="driver-name">{{ driver.categoryValue }}</span>
+                                <span class="driver-bar-track">
+                                  <span
+                                    class="driver-bar"
+                                    [style.width.%]="driverWidth(driver, c.topDrivers)"
+                                    [class.positive]="driver.delta >= 0"
+                                    [class.negative]="driver.delta < 0"
+                                  ></span>
+                                </span>
+                                <span
+                                  class="driver-delta"
+                                  [class.up]="driver.delta >= 0"
+                                  [class.down]="driver.delta < 0"
+                                >{{ formatDelta(driver.delta) }}</span>
+                              </div>
+                              <span class="driver-column-note">{{ driver.categoryColumn }}</span>
+                            }
+                          </div>
+                        }
+
+                        @if (c.lowConfidence) {
+                          <p class="low-confidence">⚠ Low confidence — very few rows or low overlap.</p>
+                        }
+                      </div>
+                    }
+                  </div>
+                  @if (result.skippedReasons.length > 0) {
+                    <p class="skipped-note">{{ result.skippedReasons.join(' · ') }}</p>
+                  }
+                }
+              }
+            }
+          </article>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="insights-subsection" data-testid="cross-dataset-findings">
+    <h3>Cross-Dataset Findings</h3>
+    <p class="subsection-hint">
+      What confirmed links reveal: how completely child rows reference their
+      parents and how much data each parent carries.
+    </p>
+
+    @if (confirmedForeignKeyRelationships().length === 0) {
+      <div class="empty-state">
+        <p>Confirm a relationship between two datasets to see cross-dataset findings here.</p>
+      </div>
+    } @else {
+      <div class="cards">
+        @for (rel of confirmedForeignKeyRelationships(); track rel.id) {
+          <article class="finding-card" [attr.data-rel-id]="rel.id">
+            <header class="card-head">
+              <h4>{{ rel.datasetAName }} <span class="arrow-inline">→</span> {{ rel.datasetBName }}</h4>
+              @if (rel.matchPercentage !== null) {
+                <span class="overlap-chip">{{ rel.matchPercentage }}% match</span>
+              }
+            </header>
+            @let state = findings()[rel.id];
+            @if (state?.loading) {
+              <div class="mini-state"><span class="spinner"></span> Analysing relationship…</div>
+            } @else if (state?.error) {
+              <p class="alert" role="alert">{{ state!.error }}</p>
+            } @else if (state?.result; as result) {
+              <div class="finding">
+                <span class="finding-tag">Referential completeness</span>
+                <p class="finding-text">{{ result.referentialCompleteness.summary }}</p>
+              </div>
+              @if (result.joinAggregate; as join) {
+                <div class="finding">
+                  <span class="finding-tag">Join aggregate</span>
+                  <p class="finding-text">{{ join.summary }}</p>
+                </div>
+              }
+            }
+          </article>
+        }
+      </div>
+    }
+  </section>
+</div>

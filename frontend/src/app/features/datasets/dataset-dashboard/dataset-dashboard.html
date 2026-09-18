@@ -1,0 +1,139 @@
+<section class="dashboard-page">
+  @if (!embedded) {
+    <a [routerLink]="['/projects', projectIdValue, 'datasets', datasetIdValue]"
+       class="back-link">← Back to dataset</a>
+  }
+
+  @if (errorMessage()) {
+    <div class="alert" role="alert">{{ errorMessage() }}</div>
+    @if (errorMessage().includes('Analyze')) {
+      @if (!embedded) {
+        <a [routerLink]="['/projects', projectIdValue, 'datasets', datasetIdValue]"
+           class="btn-primary">Run Analysis First</a>
+      }
+    }
+  } @else if (loading()) {
+    <div class="state-block">
+      <span class="spinner"></span>
+      <p>Loading dashboard…</p>
+    </div>
+  } @else if (dashboard(); as dash) {
+    @if (dataset(); as d) {
+      <header class="header">
+        <div>
+          <h1>{{ d.name }} Dashboard</h1>
+          <p class="meta">
+            {{ d.originalFilename }} · {{ d.rowCount }} rows × {{ d.columnCount }} cols
+            @if (d.isCleanedVersion) {
+              · Cleaned data
+            }
+          </p>
+        </div>
+      </header>
+    }
+
+    <div class="kpi-grid">
+      <article class="kpi-card">
+        <span class="kpi-value">{{ formatNumber(dash.kpis.totalRows) }}</span>
+        <span class="kpi-label">Total Rows</span>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-value">{{ dash.kpis.totalColumns }}</span>
+        <span class="kpi-label">Columns</span>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-value" [class.warning]="dash.kpis.missingValuesPercent > 10">
+          {{ formatPercent(dash.kpis.missingValuesPercent) }}
+        </span>
+        <span class="kpi-label">Missing Values</span>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-value" [class.warning]="dash.kpis.duplicateRowsPercent > 5">
+          {{ formatPercent(dash.kpis.duplicateRowsPercent) }}
+        </span>
+        <span class="kpi-label">Duplicate Rows</span>
+      </article>
+    </div>
+
+    <h2 class="section-title">Charts</h2>
+
+    @if (!dash.suggestedCharts.length) {
+      <div class="empty-placeholder">
+        <p>No charts could be generated from this dataset.</p>
+      </div>
+    } @else {
+      @if (featuredCharts().length) {
+        <h3 class="subsection-title">Featured insights</h3>
+        <div class="chart-grid">
+          @for (chart of featuredCharts(); track chart.id) {
+            @if (chartStates()[chart.id]; as state) {
+              <article class="chart-card" [class.featured]="chart.featured">
+                <header class="chart-head">
+                  <h3 class="chart-title">{{ chart.title }}</h3>
+                  @if (chart.crossColumn) {
+                    <span class="badge-cross">cross-column</span>
+                  }
+                </header>
+                @if (state.loading) {
+                  <div class="chart-skeleton">
+                    <span class="spinner small"></span>
+                  </div>
+                } @else if (state.error) {
+                  <div class="chart-error">{{ state.error }}</div>
+                } @else if (state.config) {
+                  <div class="chart-container">
+                    <app-chart [config]="state.config"></app-chart>
+                  </div>
+                }
+                <div class="chart-meta">
+                  {{ chart.type }} · {{ chart.aggregation }}{{ chart.yColumn ? ' of ' + chart.yColumn : '' }}
+                  · x: {{ chart.xColumn }}
+                </div>
+              </article>
+            }
+          }
+        </div>
+      }
+
+      @if (moreCharts().length) {
+        <div class="show-more-row">
+          <button type="button" class="btn-secondary" (click)="toggleShowAll()">
+            {{ showAllCharts() ? 'Show fewer charts' : 'Show ' + moreCharts().length + ' more charts' }}
+          </button>
+        </div>
+        @if (showAllCharts()) {
+          <h3 class="subsection-title">More charts</h3>
+          <div class="chart-grid">
+            @for (chart of moreCharts(); track chart.id) {
+              @if (chartStates()[chart.id]; as state) {
+                <article class="chart-card">
+                  <header class="chart-head">
+                    <h3 class="chart-title">{{ chart.title }}</h3>
+                    @if (chart.crossColumn) {
+                      <span class="badge-cross">cross-column</span>
+                    }
+                  </header>
+                  @if (state.loading) {
+                    <div class="chart-skeleton">
+                      <span class="spinner small"></span>
+                    </div>
+                  } @else if (state.error) {
+                    <div class="chart-error">{{ state.error }}</div>
+                  } @else if (state.config) {
+                    <div class="chart-container">
+                      <app-chart [config]="state.config"></app-chart>
+                    </div>
+                  }
+                  <div class="chart-meta">
+                    {{ chart.type }} · {{ chart.aggregation }}{{ chart.yColumn ? ' of ' + chart.yColumn : '' }}
+                    · x: {{ chart.xColumn }}
+                  </div>
+                </article>
+              }
+            }
+          </div>
+        }
+      }
+    }
+  }
+</section>

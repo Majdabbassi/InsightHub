@@ -1,0 +1,70 @@
+<section class="trends-section">
+  <div class="trends-header">
+    <div>
+      <h2>Insights</h2>
+      <p class="trends-subtitle">Automatic trend detection across time-based columns.</p>
+    </div>
+    <button type="button" class="btn-analyze" (click)="load()" [disabled]="loading()">
+      {{ loading() ? 'Detecting…' : '↻ Refresh trends' }}
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="state-block">
+      <span class="spinner"></span>
+      <p>Detecting trends…</p>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="alert" role="alert">{{ errorMessage() }}</div>
+  } @else if (result(); as r) {
+    @if (r.trends.length === 0) {
+      <div class="empty-placeholder">
+        <span class="empty-icon">📈</span>
+        <p><strong>Not enough time-based data to detect trends</strong></p>
+        @if (r.skippedReasons.length > 0) {
+          <ul class="skip-reasons">
+            @for (reason of r.skippedReasons; track reason) {
+              <li>{{ reason }}</li>
+            }
+          </ul>
+        }
+      </div>
+    } @else {
+      <div class="trend-grid">
+        @for (trend of r.trends; track trend.column + '-' + trend.temporalColumn) {
+          <article
+            class="trend-card"
+            [class]="'trend-card dir-' + trend.direction.toLowerCase() + ' strength-' + trend.strength.toLowerCase()">
+            <header class="trend-card-header">
+              <span class="direction-icon" aria-hidden="true">{{ iconFor(trend.direction) }}</span>
+              <h3>{{ trend.column }}</h3>
+              <span
+                class="strength-badge"
+                [class]="'strength-badge badge-' + trend.strength.toLowerCase()">
+                {{ trend.strength }}
+              </span>
+            </header>
+
+            <p class="trend-summary">{{ trend.summary }}</p>
+
+            <div class="spark-wrap">
+              <app-chart [config]="sparkline(trend)" />
+            </div>
+
+            <footer class="trend-meta">
+              over {{ trend.temporalColumn }} · {{ trend.periodGrouping }} ·
+              {{ trend.periodCount }} periods · R² {{ trend.rSquared.toFixed(2) }} ·
+              {{ formatChange(trend.percentageChange) }}
+            </footer>
+          </article>
+        }
+      </div>
+
+      @if (r.skippedReasons.length > 0) {
+        <p class="skipped-note">
+          Skipped: {{ r.skippedReasons.join(' · ') }}
+        </p>
+      }
+    }
+  }
+</section>

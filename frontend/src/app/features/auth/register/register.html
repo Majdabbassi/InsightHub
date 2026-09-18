@@ -1,0 +1,98 @@
+<section class="auth-card">
+  <h1>Create your account</h1>
+  <p class="subtitle">Start analyzing data in minutes</p>
+
+  @if (errorMessage()) {
+    <div class="alert" role="alert">{{ errorMessage() }}</div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+    <div class="field">
+      <label for="fullName">Full name</label>
+      <input
+        id="fullName"
+        type="text"
+        formControlName="fullName"
+        placeholder="Jane Doe"
+        autocomplete="name"
+      />
+      @if (form.controls.fullName.touched && form.controls.fullName.invalid) {
+        <span class="field-error">
+          @if (form.controls.fullName.hasError('required')) {
+            Full name is required.
+          } @else {
+            Full name must be between 2 and 100 characters.
+          }
+        </span>
+      }
+    </div>
+
+    <div class="field">
+      <label for="email">Email</label>
+      <input
+        id="email"
+        type="email"
+        formControlName="email"
+        placeholder="you@example.com"
+        autocomplete="email"
+      />
+      @if (form.controls.email.touched && form.controls.email.invalid) {
+        <span class="field-error">
+          @if (form.controls.email.hasError('required')) {
+            Email is required.
+          } @else {
+            Enter a valid email address.
+          }
+        </span>
+      }
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <input
+        id="password"
+        type="password"
+        formControlName="password"
+        placeholder="At least 8 characters"
+        autocomplete="new-password"
+      />
+      @if (form.controls.password.touched && form.controls.password.invalid) {
+        <span class="field-error">
+          @if (form.controls.password.hasError('required')) {
+            Password is required.
+          } @else {
+            Password must be at least 8 characters.
+          }
+        </span>
+      }
+    </div>
+
+    <div class="field">
+      <label for="confirmPassword">Confirm password</label>
+      <input
+        id="confirmPassword"
+        type="password"
+        formControlName="confirmPassword"
+        placeholder="Repeat your password"
+        autocomplete="new-password"
+      />
+      @if (form.controls.confirmPassword.touched && form.controls.confirmPassword.invalid) {
+        <span class="field-error">Please confirm your password.</span>
+      } @else if (
+        form.touched &&
+        form.hasError('passwordMismatch') &&
+        form.controls.confirmPassword.value
+      ) {
+        <span class="field-error">Passwords do not match.</span>
+      }
+    </div>
+
+    <button type="submit" [disabled]="loading()">
+      {{ loading() ? 'Creating account…' : 'Create account' }}
+    </button>
+  </form>
+
+  <p class="switch-link">
+    Already have an account? <a routerLink="/login">Sign in</a>
+  </p>
+</section>

@@ -1,0 +1,200 @@
+<section class="detail-page">
+  <a routerLink="/projects" class="back-link">← Back to projects</a>
+
+  @if (loading()) {
+    <div class="skeleton-header">
+      <div class="skel skel-title"></div>
+      <div class="skel skel-line"></div>
+    </div>
+    <div class="kpi-grid">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="skel kpi-skel"></div>
+      }
+    </div>
+    <div class="skel table-skel"></div>
+    <div class="skel diagram-skel"></div>
+  } @else if (errorMessage()) {
+    <div class="alert" role="alert">{{ errorMessage() }}</div>
+    <a routerLink="/projects" class="btn-secondary">Back to projects</a>
+  } @else if (project(); as p) {
+    <header class="header">
+      <div>
+        <h1>{{ p.name }}</h1>
+        @if (p.description) {
+          <p class="description">{{ p.description }}</p>
+        }
+        <p class="meta">
+          Created {{ p.createdAt | date: 'MMM d, y · HH:mm' }} · Updated
+          {{ p.updatedAt | date: 'MMM d, y · HH:mm' }}
+        </p>
+      </div>
+      <nav class="header-actions">
+        <a [routerLink]="['/projects', p.id, 'edit']" class="btn-secondary">Edit</a>
+      </nav>
+    </header>
+
+    <label class="toggle-row">
+      <input
+        type="checkbox"
+        [checked]="!showAllVersions()"
+        (change)="toggleVersions(!$any($event.target).checked)"
+      />
+      <span class="switch" aria-hidden="true"></span>
+      <span class="toggle-label">
+        {{ showAllVersions() ? 'Showing all versions' : 'Active datasets only' }}
+      </span>
+    </label>
+
+    @if (stats(); as s) {
+      <div class="kpi-grid" [attr.data-mode]="showAllVersions() ? 'all' : 'active'">
+        <article class="kpi">
+          <h3>Datasets</h3>
+          <p class="kpi-value">{{ s.datasetCount }}</p>
+        </article>
+        <article class="kpi">
+          <h3>Total rows</h3>
+          <p class="kpi-value">{{ s.totalRows | number }}</p>
+        </article>
+        <article class="kpi">
+          <h3>Avg quality score</h3>
+          <p class="kpi-value">
+            {{ formatAverageScore(s.averageQualityScore) }}
+            @if (s.averageQualityScore !== null) {
+              <span class="grade-badge" [ngClass]="'grade-' + gradeLetter(s.averageQualityScore)">
+                {{ gradeLetter(s.averageQualityScore) }}
+              </span>
+            }
+          </p>
+          <div class="breakdown">
+            @for (entry of gradeBreakdownEntries(s); track entry.grade) {
+              <span class="breakdown-chip">{{ entry.grade }}·{{ entry.count }}</span>
+            }
+          </div>
+        </article>
+        <article class="kpi">
+          <h3>Low-quality datasets</h3>
+          <p class="kpi-value" [class.kpi-danger]="s.lowQualityDatasetCount > 0">
+            {{ s.lowQualityDatasetCount }}
+          </p>
+          <p class="kpi-hint">score below 60</p>
+        </article>
+      </div>
+    }
+
+    <section class="datasets-section">
+      <h2>Datasets</h2>
+      <app-dataset-upload (uploaded)="loadOverview()" />
+
+      @if (deleteError()) {
+        <div class="alert" role="alert">{{ deleteError() }}</div>
+      }
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Rows</th>
+              <th>Columns</th>
+              <th>Quality</th>
+              <th>Uploaded</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (dataset of displayedDatasets(); track dataset.id) {
+              <tr
+                [class.row-muted]="!dataset.isActive"
+                [attr.data-dataset-id]="dataset.id"
+                [attr.data-active]="dataset.isActive"
+              >
+                <td class="cell-name">
+                  <a
+                    class="name-link"
+                    [routerLink]="['/projects', projectId, 'datasets', dataset.id]"
+                    [title]="dataset.name"
+                  >{{ dataset.name }}</a>
+                </td>
+                <td>{{ dataset.rowCount | number }}</td>
+                <td>{{ dataset.columnCount }}</td>
+                <td>
+                  @if (dataset.qualityScore !== null) {
+                    <span class="quality-cell">
+                      {{ dataset.qualityScore }}
+                      @if (dataset.qualityGrade; as grade) {
+                        <span class="grade-badge" [ngClass]="'grade-' + grade.toLowerCase()">{{ grade }}</span>
+                      }
+                    </span>
+                  } @else {
+                    —
+                  }
+                </td>
+                <td>{{ dataset.uploadedAt | date: 'MMM d, y · HH:mm' }}</td>
+                <td>
+                  @if (dataset.isActive) {
+                    <span class="badge badge-active">Active</span>
+                  } @else if (supersededInto(dataset); as parentName) {
+                    <span class="badge badge-superseded" [title]="'Superseded by ' + parentName">
+                      Superseded → {{ parentName }}
+                    </span>
+                  } @else {
+                    <span class="badge badge-superseded">Superseded</span>
+                  }
+                </td>
+                <td class="actions-cell">
+                  <button
+                    type="button"
+                    class="btn-delete"
+                    (click)="requestDelete(dataset)"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7" class="empty-cell">No datasets to show. Upload a CSV above to get started.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="relationships-section">
+      <h2>Relationships</h2>
+      <p class="section-hint">
+        Drag cards to rearrange. Click a card or a connection line to inspect it.
+      </p>
+      <app-relationship-diagram [projectId]="projectId" [datasets]="overview()?.datasets ?? []" />
+    </section>
+
+    <section class="project-insights-section">
+      <h2>Project Insights</h2>
+      <p class="section-hint">
+        Findings that span multiple datasets: sibling comparisons and
+        cross-dataset facts.
+      </p>
+      <app-project-insights [projectId]="projectId" />
+    </section>
+  }
+
+  @if (datasetPendingDelete(); as dataset) {
+    <div class="modal-backdrop" (click)="cancelDelete()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <h3>Delete dataset</h3>
+        <p>
+          Are you sure you want to delete <strong>{{ dataset.name }}</strong
+          >? The file will be removed and this cannot be undone.
+        </p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="cancelDelete()">Cancel</button>
+          <button type="button" class="btn-danger" (click)="confirmDelete()" [disabled]="deleting()">
+            {{ deleting() ? 'Deleting…' : 'Delete' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <app-project-chat [projectId]="projectId" />
+</section>

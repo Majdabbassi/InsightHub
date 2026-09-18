@@ -1,0 +1,180 @@
+<div class="diagram">
+  @if (hasEnoughDatasets()) {
+    <div class="toolbar">
+      <div class="legend" aria-hidden="true">
+        <span class="legend-item"><span class="swatch swatch-suggested"></span>Suggested</span>
+        <span class="legend-item"><span class="swatch swatch-confirmed"></span>Confirmed</span>
+        <span class="legend-item"><span class="swatch swatch-manual"></span>Manual</span>
+        <span class="legend-item"><span class="swatch swatch-sibling"></span>Sibling</span>
+      </div>
+      <div class="actions">
+        @if (scanMessage()) {
+          <span class="scan-message">{{ scanMessage() }}</span>
+        }
+        <button type="button" class="btn-secondary" (click)="openAddModal()">+ Add relationship</button>
+        <button type="button" class="btn-primary" (click)="scan()" [disabled]="scanning()">
+          {{ scanning() ? 'Scanning…' : 'Scan for relationships' }}
+        </button>
+      </div>
+    </div>
+
+    <div
+      #canvas
+      class="canvas"
+      [class.selection-active]="selectedNodeId() !== null"
+      (mousedown)="onCanvasMouseDown($event)"
+      (document:mousemove)="onMouseMove($event)"
+      (document:mouseup)="onMouseUp()"
+    >
+      <svg class="edges" viewBox="0 0 920 520" preserveAspectRatio="none">
+        @for (edge of edges(); track edge.rel.id) {
+          <line
+            class="edge-line hit"
+            [class.hl]="selectedNodeId() !== null && edgeTouches(edge.rel, selectedNodeId())"
+            [class.dim]="selectedNodeId() !== null && !edgeTouches(edge.rel, selectedNodeId())"
+            [attr.x1]="edge.x1"
+            [attr.y1]="edge.y1"
+            [attr.x2]="edge.x2"
+            [attr.y2]="edge.y2"
+            (mousedown)="selectEdge(edge.rel.id); $event.stopPropagation()"
+          />
+          <line
+            class="edge-line"
+            [ngClass]="edge.statusClass"
+            [class.hl]="selectedNodeId() !== null && edgeTouches(edge.rel, selectedNodeId())"
+            [class.dim]="selectedNodeId() !== null && !edgeTouches(edge.rel, selectedNodeId())"
+            [attr.x1]="edge.x1"
+            [attr.y1]="edge.y1"
+            [attr.x2]="edge.x2"
+            [attr.y2]="edge.y2"
+          />
+        }
+      </svg>
+
+      @for (node of nodes(); track node.id) {
+        <article
+          class="node-card"
+          [class.dragging]="isDragging(node.id)"
+          [class.selected]="selectedNodeId() === node.id"
+          [class.dim]="nodeIsDimmed(node.id)"
+          [style.left.px]="node.x"
+          [style.top.px]="node.y"
+          (mousedown)="onCardMouseDown($event, node)"
+          [attr.data-node-id]="node.id"
+          [attr.data-node-name]="node.name"
+        >
+          <h4 class="node-name" [title]="node.name">{{ node.name }}</h4>
+          <div class="node-meta">
+            <span class="node-rows">{{ node.rowCount | number }} rows</span>
+            @if (node.qualityGrade; as grade) {
+              <span class="grade-badge" [ngClass]="'grade-' + grade.toLowerCase()">{{ grade }}</span>
+            }
+          </div>
+        </article>
+      }
+
+      @for (edge of edges(); track edge.rel.id) {
+        <button
+          type="button"
+          class="edge-label"
+          [ngClass]="edge.statusClass"
+          [class.hl]="selectedNodeId() !== null && edgeTouches(edge.rel, selectedNodeId())"
+          [class.dim]="selectedNodeId() !== null && !edgeTouches(edge.rel, selectedNodeId())"
+          [style.left.px]="edge.mx"
+          [style.top.px]="edge.my"
+          [attr.data-rel-id]="edge.rel.id"
+          (click)="selectEdge(edge.rel.id)"
+        >
+          {{ edgeLabel(edge) }}
+        </button>
+      }
+
+      @if (visibleRelationships().length === 0 && !scanning()) {
+        <div class="empty-hint">
+          <p>No relationships detected yet between your datasets.</p>
+          <button type="button" class="btn-primary" (click)="scan()" [disabled]="scanning()">
+            Scan for relationships
+          </button>
+        </div>
+      }
+
+      @if (selectedRelationship(); as rel) {
+        <aside class="detail-panel" data-testid="relationship-panel">
+          <header class="panel-header">
+            <h4>Relationship</h4>
+            <button type="button" class="panel-close" (click)="selectedRelId.set(null)" aria-label="Close">×</button>
+          </header>
+          <span class="status-badge" [ngClass]="rel.status.toLowerCase()">{{ rel.status }}</span>
+          <dl class="panel-body">
+            <div><dt>From</dt><dd>{{ rel.datasetAName }}<small>column “{{ rel.sharedColumnA }}”</small></dd></div>
+            <div><dt>To</dt><dd>{{ rel.datasetBName }}<small>column “{{ rel.sharedColumnB }}”</small></dd></div>
+            <div><dt>Match</dt>
+              <dd>@if (rel.matchPercentage !== null) { {{ rel.matchPercentage }}% } @else { — }</dd>
+            </div>
+          </dl>
+          @if (panelError()) {
+            <p class="alert">{{ panelError() }}</p>
+          }
+          <div class="panel-actions">
+            @if (rel.status === 'SUGGESTED') {
+              <button type="button" class="btn-primary" (click)="confirmSelected()">Confirm</button>
+              <button type="button" class="btn-danger-outline" (click)="rejectSelected()">Reject</button>
+            } @else {
+              <button type="button" class="btn-danger-outline" (click)="deleteSelected()">Delete</button>
+            }
+          </div>
+        </aside>
+      }
+    </div>
+  } @else {
+    <div class="state-block empty-state">
+      <p>Upload another dataset to start discovering relationships between your data.</p>
+    </div>
+  }
+
+  @if (addModalOpen()) {
+    <div class="modal-backdrop" (click)="closeAddModal()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <h3>Add relationship</h3>
+        <p class="modal-hint">Declare a connection you already know about. Manual relationships are drawn in purple.</p>
+        <div class="form-grid">
+          <label class="field">
+            <span>Dataset A</span>
+            <select [(ngModel)]="formDatasetAId">
+              <option value="" disabled>Select a dataset…</option>
+              @for (dataset of datasets(); track dataset.id) {
+                <option [value]="dataset.id">{{ dataset.name }}</option>
+              }
+            </select>
+          </label>
+          <label class="field">
+            <span>Dataset B</span>
+            <select [(ngModel)]="formDatasetBId">
+              <option value="" disabled>Select a dataset…</option>
+              @for (dataset of datasets(); track dataset.id) {
+                <option [value]="dataset.id">{{ dataset.name }}</option>
+              }
+            </select>
+          </label>
+          <label class="field">
+            <span>Column in Dataset A</span>
+            <input type="text" [(ngModel)]="formColumnA" placeholder="e.g. order_id" />
+          </label>
+          <label class="field">
+            <span>Column in Dataset B</span>
+            <input type="text" [(ngModel)]="formColumnB" placeholder="e.g. order_id" />
+          </label>
+        </div>
+        @if (addError()) {
+          <p class="alert">{{ addError() }}</p>
+        }
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeAddModal()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="createManualRelationship()" [disabled]="adding()">
+            {{ adding() ? 'Creating…' : 'Create' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

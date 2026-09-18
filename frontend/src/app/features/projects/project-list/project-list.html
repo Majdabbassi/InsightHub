@@ -1,0 +1,69 @@
+<section class="projects-page">
+  <header class="page-header">
+    <div>
+      <h1>Projects</h1>
+      <p class="subtitle">Containers for your datasets, dashboards and insights.</p>
+    </div>
+    <a routerLink="/projects/new" class="btn-primary">+ New project</a>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert" role="alert">
+      {{ errorMessage() }}
+      <button type="button" class="btn-retry" (click)="loadProjects()">Retry</button>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="state-block">
+      <span class="spinner"></span>
+      <p>Loading projects…</p>
+    </div>
+  } @else if (!projects().length && !errorMessage()) {
+    <div class="state-block empty">
+      <h2>No projects yet</h2>
+      <p>Create your first project to start uploading datasets.</p>
+      <a routerLink="/projects/new" class="btn-primary">Create your first project</a>
+    </div>
+  } @else {
+    <div class="grid">
+      @for (project of projects(); track project.id) {
+        <article class="card" (click)="open(project)">
+          <h2>{{ project.name }}</h2>
+          <p class="description">{{ project.description || 'No description' }}</p>
+          <footer>
+            <span class="date">Created {{ project.createdAt | date: 'MMM d, y' }}</span>
+            <span class="actions">
+              <button
+                type="button"
+                class="btn-icon"
+                (click)="requestDelete($event, project)"
+                aria-label="Delete project"
+              >
+                Delete
+              </button>
+            </span>
+          </footer>
+        </article>
+      }
+    </div>
+  }
+</section>
+
+@if (projectPendingDelete(); as project) {
+  <div class="modal-backdrop" (click)="cancelDelete()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h3>Delete project</h3>
+      <p>
+        Are you sure you want to delete <strong>{{ project.name }}</strong>? This cannot be
+        undone.
+      </p>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="cancelDelete()">Cancel</button>
+        <button type="button" class="btn-danger" (click)="confirmDelete()" [disabled]="deleting()">
+          {{ deleting() ? 'Deleting…' : 'Delete' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,53 @@
+<main class="dashboard">
+  <section class="content">
+    @if (loadError()) {
+      <div class="alert" role="alert">{{ loadError() }}</div>
+    }
+    <h1>Welcome, {{ user()?.fullName }} 👋</h1>
+    <p class="lead">
+      You are signed in as <strong>{{ user()?.email }}</strong>. Create a project to start
+      uploading datasets and running AI-powered analyses.
+    </p>
+
+    <div class="cta-row">
+      <a routerLink="/projects" class="btn-primary">Go to my projects →</a>
+    </div>
+
+    <div class="placeholder-grid">
+      <article class="card highlight" routerLink="/projects/new">
+        <h2>+ New project</h2>
+        <p>Create a container for your datasets and analyses.</p>
+      </article>
+      <article class="card" routerLink="/projects">
+        <h2>My projects</h2>
+        <p>Browse, edit and manage your existing projects.</p>
+      </article>
+      <article class="card" routerLink="/projects">
+        <h2>Datasets &amp; insights</h2>
+        <p>Open a project and upload CSVs to unlock trends, anomalies and comparisons.</p>
+      </article>
+    </div>
+
+    @if (recentProjects().length) {
+      <section class="recent-strip">
+        <div class="recent-head">
+          <h2>Recent projects</h2>
+          <a routerLink="/projects" class="see-all">See all →</a>
+        </div>
+        <div class="recent-grid">
+          @for (project of recentProjects(); track project.id) {
+            <a
+              class="recent-card"
+              [routerLink]="['/projects', project.id]"
+            >
+              <span class="rp-name">{{ project.name }}</span>
+              @if (project.description) {
+                <span class="rp-desc">{{ project.description }}</span>
+              }
+            </a>
+          }
+        </div>
+      </section>
+    }
+  </section>
+</main>
