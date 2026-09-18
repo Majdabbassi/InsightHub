@@ -34,20 +34,24 @@
 
     <div class="kpi-grid">
       <article class="kpi-card">
+        <span class="kpi-icon"><ui-icon name="table" [size]="18" /></span>
         <span class="kpi-value">{{ formatNumber(dash.kpis.totalRows) }}</span>
         <span class="kpi-label">Total Rows</span>
       </article>
       <article class="kpi-card">
+        <span class="kpi-icon"><ui-icon name="activity" [size]="18" /></span>
         <span class="kpi-value">{{ dash.kpis.totalColumns }}</span>
         <span class="kpi-label">Columns</span>
       </article>
       <article class="kpi-card">
+        <span class="kpi-icon"><ui-icon name="alert" [size]="18" /></span>
         <span class="kpi-value" [class.warning]="dash.kpis.missingValuesPercent > 10">
           {{ formatPercent(dash.kpis.missingValuesPercent) }}
         </span>
         <span class="kpi-label">Missing Values</span>
       </article>
       <article class="kpi-card">
+        <span class="kpi-icon"><ui-icon name="copy" [size]="18" /></span>
         <span class="kpi-value" [class.warning]="dash.kpis.duplicateRowsPercent > 5">
           {{ formatPercent(dash.kpis.duplicateRowsPercent) }}
         </span>

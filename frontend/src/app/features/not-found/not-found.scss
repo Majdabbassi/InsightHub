@@ -1,0 +1,35 @@
+.nf-page {
+  max-width: 440px;
+  margin: 6rem auto;
+  padding: 0 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
+
+  .nf-icon {
+    color: var(--ink-2);
+    margin-bottom: 0.25rem;
+  }
+
+  .nf-code {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    color: var(--ink);
+  }
+
+  p {
+    margin: 0 0 1rem;
+    color: var(--ink-3);
+    font-size: 0.92rem;
+  }
+}

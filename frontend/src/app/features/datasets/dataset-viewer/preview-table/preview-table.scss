@@ -1,0 +1,33 @@
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+
+  h2 {
+    font-size: 1.05rem;
+    margin: 0 0 0.75rem;
+  }
+
+  .rows-picker {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--ink-3);
+
+    select {
+      padding: 0.3rem 0.5rem;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      background: var(--surface);
+      font-size: 0.85rem;
+    }
+  }
+}
+
+.preview-note {
+  margin-top: 0.6rem;
+  color: var(--ink-3);
+  font-size: 0.8rem;
+}

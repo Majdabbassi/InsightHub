@@ -1,0 +1,135 @@
+.cleaning-section {
+  margin-top: 2.5rem;
+}
+
+.cleaning-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+
+  h2 {
+    font-size: 1.05rem;
+    margin: 0 0 0.75rem;
+  }
+}
+
+.cleaning-reassurance {
+  color: var(--ink-3);
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.suggestion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.suggestion-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+
+  &.disabled {
+    opacity: 0.55;
+  }
+}
+
+.suggestion-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ink);
+
+  input[type='checkbox'] {
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+  }
+}
+
+.suggestion-reasoning {
+  margin: -0.3rem 0 0;
+  padding-left: 1.6rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+
+.suggestion-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+
+  select,
+  input[type='text'] {
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    background: var(--surface);
+    font-size: 0.85rem;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  input[type='text'] {
+    min-width: 180px;
+  }
+}
+
+.column-tag {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  color: var(--accent-hover);
+  font-size: 0.72rem;
+  font-weight: 600;
+
+  &.row-level {
+    background: var(--fill-subtle);
+    color: var(--ink-3);
+  }
+}
+
+.affected {
+  font-size: 0.78rem;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.apply-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.cleaning-success {
+  background: var(--surface);
+  border: 1px solid var(--pos-bg);
+  border-radius: 14px;
+  padding: 1.5rem;
+
+  h3 {
+    margin: 0 0 1rem;
+    font-size: 1.1rem;
+  }
+
+  .success-note {
+    color: var(--ink-3);
+    font-size: 0.9rem;
+    margin: 1rem 0;
+  }
+}

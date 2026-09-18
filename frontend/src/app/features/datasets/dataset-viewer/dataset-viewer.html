@@ -40,501 +40,109 @@
     </header>
 
     <nav class="ws-tabs" role="tablist" aria-label="Dataset workspace">
-      <button type="button" role="tab" data-tab="data"
+      <button type="button" role="tab" data-tab="data" id="tab-data"
               [class.active]="activeTab() === 'data'"
               [attr.aria-selected]="activeTab() === 'data'"
-              (click)="selectTab('data')">Data</button>
-      <button type="button" role="tab" data-tab="quality"
+              [attr.aria-controls]="'panel-data'"
+              (click)="selectTab('data')"
+              (keydown)="onTabKeydown($event, 'data')">Data</button>
+      <button type="button" role="tab" data-tab="quality" id="tab-quality"
               [class.active]="activeTab() === 'quality'"
               [attr.aria-selected]="activeTab() === 'quality'"
-              (click)="selectTab('quality')">Quality</button>
-      <button type="button" role="tab" data-tab="explore"
+              [attr.aria-controls]="'panel-quality'"
+              (click)="selectTab('quality')"
+              (keydown)="onTabKeydown($event, 'quality')">Quality</button>
+      <button type="button" role="tab" data-tab="explore" id="tab-explore"
               [class.active]="activeTab() === 'explore'"
               [attr.aria-selected]="activeTab() === 'explore'"
-              (click)="selectTab('explore')">Explore</button>
-      <button type="button" role="tab" data-tab="insights"
+              [attr.aria-controls]="'panel-explore'"
+              (click)="selectTab('explore')"
+              (keydown)="onTabKeydown($event, 'explore')">Explore</button>
+      <button type="button" role="tab" data-tab="insights" id="tab-insights"
               [class.active]="activeTab() === 'insights'"
               [attr.aria-selected]="activeTab() === 'insights'"
-              (click)="selectTab('insights')">Insights</button>
-      <button type="button" role="tab" data-tab="clean"
+              [attr.aria-controls]="'panel-insights'"
+              (click)="selectTab('insights')"
+              (keydown)="onTabKeydown($event, 'insights')">Insights</button>
+      <button type="button" role="tab" data-tab="clean" id="tab-clean"
               [class.active]="activeTab() === 'clean'"
               [attr.aria-selected]="activeTab() === 'clean'"
-              (click)="selectTab('clean')">Clean</button>
+              [attr.aria-controls]="'panel-clean'"
+              (click)="selectTab('clean')"
+              (keydown)="onTabKeydown($event, 'clean')">Clean</button>
     </nav>
 
     @if (activeTab() === 'data') {
-      @if (preview(); as p) {
-      <section class="preview-section">
-        <div class="preview-header">
-          <h2>Preview</h2>
-          <label class="rows-picker">
-            Rows:
-            <select
-              (change)="onRowsChange($event)"
-              [value]="previewRows()"
-              [disabled]="loading()"
-            >
-              @for (option of rowOptions; track option) {
-                <option [value]="option">{{ option }}</option>
-              }
-            </select>
-          </label>
-        </div>
-
-        @if (!p.columns.length && !p.rows.length) {
-          <div class="empty-placeholder">
-            <p>This CSV appears to be empty.</p>
-          </div>
-        } @else {
-          <div class="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th class="rownum">#</th>
-                  @for (column of p.columns; track $index) {
-                    <th>{{ column }}</th>
-                  }
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of p.rows; track $index) {
-                  <tr>
-                    <td class="rownum">{{ $index + 1 }}</td>
-                    @for (cell of row; track $index) {
-                      <td>{{ cell }}</td>
-                    }
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-          <p class="preview-note">
-            Showing first {{ p.rows.length }} of the file's rows
-            @if (d.rowCount === null) {
-              — full row/column counts will be filled in after analysis.
-            }
-          </p>
-        }
-      </section>
-    }
+      <div role="tabpanel" id="panel-data" tabindex="0" aria-labelledby="tab-data">
+        <app-preview-table
+          [preview]="preview()"
+          [rowCount]="d.rowCount"
+          [loading]="loading()"
+          [rows]="previewRows()"
+          [rowOptions]="rowOptions"
+          (rowsChange)="onRowsChange($event)"
+        />
+      </div>
     }
 
     @if (activeTab() === 'quality') {
-      <section class="analysis-section">
-      <div class="analysis-header">
-        <h2>Analysis</h2>
-        @if (analysisState() === 'ready' || analysisState() === 'not-analyzed') {
-          <button type="button" class="btn-analyze" (click)="runAnalysis()" [disabled]="analysisState() === 'running'">
-            @if (analysisState() === 'running') {
-              Analyzing…
-            } @else if (analysis()) {
-              ↻ Re-analyze
-            } @else {
-              ▶ Run analysis
-            }
-          </button>
-        }
+      <div role="tabpanel" id="panel-quality" tabindex="0" aria-labelledby="tab-quality">
+        <app-quality-analysis
+          [state]="analysisState()"
+          [analysis]="analysis()"
+          [error]="analysisError()"
+          (analyze)="runAnalysis()"
+        />
       </div>
+    }
 
-      @if (analysisError()) {
-        <div class="alert" role="alert">{{ analysisError() }}</div>
-      }
+    @if (activeTab() === 'explore') {
+      <div role="tabpanel" id="panel-explore" tabindex="0" aria-labelledby="tab-explore">
+        <section class="explore-section">
+          <app-dataset-dashboard [embedded]="true" />
+        </section>
+      </div>
+    }
 
-      @switch (analysisState()) {
-        @case ('loading') {
+    @if (activeTab() === 'insights') {
+      <div role="tabpanel" id="panel-insights" tabindex="0" aria-labelledby="tab-insights">
+        @if (analysisState() === 'ready') {
+          <app-trend-insights [projectId]="projectId" [datasetId]="d.id" />
+          <app-period-comparison [projectId]="projectId" [datasetId]="d.id" />
+          <app-period-anomalies [projectId]="projectId" [datasetId]="d.id" />
+          <app-top-performers [projectId]="projectId" [datasetId]="d.id" />
+        } @else if (analysisState() === 'not-analyzed') {
+          <div class="empty-placeholder insights-gate">
+            <p>Run the analysis to unlock trends, period comparisons, anomaly detection and top performers.</p>
+            <button type="button" class="btn-primary" (click)="selectTab('quality')">Go to Quality</button>
+          </div>
+        } @else {
           <div class="state-block">
             <span class="spinner"></span>
             <p>Checking for existing analysis…</p>
           </div>
         }
-        @case ('running') {
-          <div class="state-block running">
-            <span class="spinner"></span>
-            <p>Analyzing your dataset… this may take a few seconds.</p>
-          </div>
-        }
-        @case ('not-analyzed') {
-          <div class="empty-placeholder">
-            <p>This dataset hasn't been analyzed yet.</p>
-            <p class="hint">Run the analysis to get row/column stats, missing values, duplicates and more.</p>
-          </div>
-        }
-        @case ('ready') {
-          @if (analysis(); as a) {
-            @if (a.dataQuality; as dq) {
-              <article class="quality-card {{ gradeTier(dq.grade) }}">
-                <div class="quality-score-block">
-                  <div class="quality-score-row">
-                    <span class="quality-score">{{ dq.overallScore }}</span>
-                    <span class="quality-grade">{{ dq.grade }}</span>
-                  </div>
-                  <span class="quality-caption">Data quality score</span>
-                </div>
-                <div class="quality-breakdown">
-                  <div class="breakdown-row">
-                    <span class="breakdown-label">Completeness</span>
-                    <div class="breakdown-bar">
-                      <div class="breakdown-fill" [style.width.%]="qualityPercent(dq.breakdown.completeness)"></div>
-                    </div>
-                    <span class="breakdown-value">{{ qualityPercent(dq.breakdown.completeness) }}%</span>
-                  </div>
-                  <div class="breakdown-row">
-                    <span class="breakdown-label">Uniqueness</span>
-                    <div class="breakdown-bar">
-                      <div class="breakdown-fill" [style.width.%]="qualityPercent(dq.breakdown.uniqueness)"></div>
-                    </div>
-                    <span class="breakdown-value">{{ qualityPercent(dq.breakdown.uniqueness) }}%</span>
-                  </div>
-                  <div class="breakdown-row">
-                    <span class="breakdown-label">Consistency</span>
-                    <div class="breakdown-bar">
-                      <div class="breakdown-fill" [style.width.%]="qualityPercent(dq.breakdown.consistency)"></div>
-                    </div>
-                    <span class="breakdown-value">{{ qualityPercent(dq.breakdown.consistency) }}%</span>
-                  </div>
-                  <div class="breakdown-row">
-                    <span class="breakdown-label">Validity</span>
-                    <div class="breakdown-bar">
-                      <div class="breakdown-fill" [style.width.%]="qualityPercent(dq.breakdown.validity)"></div>
-                    </div>
-                    <span class="breakdown-value">{{ qualityPercent(dq.breakdown.validity) }}%</span>
-                  </div>
-                </div>
-              </article>
-            }
-
-            <div class="summary-cards">
-              <article class="stat-card">
-                <span class="stat-value">{{ formatNumber(a.rowCount) }}</span>
-                <span class="stat-label">Rows</span>
-              </article>
-              <article class="stat-card">
-                <span class="stat-value">{{ formatNumber(a.columnCount) }}</span>
-                <span class="stat-label">Columns</span>
-              </article>
-              <article class="stat-card">
-                <span class="stat-value">{{ formatNumber(a.duplicateRowCount) }}</span>
-                <span class="stat-label">Duplicate rows</span>
-              </article>
-              <article class="stat-card">
-                <span class="stat-value">{{ formatNumber(a.totalMissingValues) }}</span>
-                <span class="stat-label">Missing values</span>
-              </article>
-            </div>
-
-            <div class="table-scroll">
-              <table class="analysis-table">
-                <thead>
-                  <tr>
-                    <th>Column</th>
-                    <th>Role</th>
-                    <th>Type</th>
-                    <th>Missing</th>
-                    <th>Unique</th>
-                    <th>Min</th>
-                    <th>Max</th>
-                    <th>Mean</th>
-                    <th>Median</th>
-                    <th>Std Dev</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (column of a.columns; track column.name) {
-                    <tr
-                      [class.expandable]="column.reasoning || hasOutliers(column)"
-                      [class.expanded]="isExpanded(column.name)"
-                      (click)="toggleColumnDetails(column.name)"
-                    >
-                      <td class="col-name">
-                        {{ column.name }}
-                        @if (needsAttention(column)) {
-                          <span
-                            class="warning-icon"
-                            role="img"
-                            aria-label="Data quality warning"
-                            [title]="roleWarning(column)"
-                          >⚠</span>
-                        }
-                        @if (hasOutliers(column)) {
-                          <span class="outlier-chip" title="Click the row for outlier details">
-                            {{ outlierSummaryText(column) }}
-                          </span>
-                        }
-                        @if (column.topValues?.length) {
-                          <span class="top-values" [title]="topValuesText(column)">
-                            Top: {{ topValuesText(column) }}
-                          </span>
-                        }
-                      </td>
-                      <td class="role-cell" (click)="$event.stopPropagation()">
-                        @if (column.semanticRole) {
-                          <button
-                            type="button"
-                            class="role-badge {{ roleClass(column) }}"
-                            [title]="column.reasoning"
-                            (click)="toggleColumnDetails(column.name)"
-                            [attr.aria-expanded]="isExpanded(column.name)"
-                          >
-                            {{ roleLabel(column) }}
-                          </button>
-                        } @else {
-                          <span class="no-role">—</span>
-                        }
-                      </td>
-                      <td><span class="type-badge {{ column.dataType }}">{{ column.dataType }}</span></td>
-                      <td>
-                        {{ column.missingPercentage }}% ({{ column.missingCount }})
-                        @if ((column.invalidValueCount ?? 0) > 0) {
-                          <span class="invalid-count" [title]="invalidValuesText(column)">
-                            · {{ column.invalidValueCount }} invalid
-                          </span>
-                        }
-                      </td>
-                      <td>{{ formatNumber(column.uniqueCount) }}</td>
-                      <td>{{ isNumericColumn(column) ? formatNumber(column.min) : '—' }}</td>
-                      <td>{{ isNumericColumn(column) ? formatNumber(column.max) : '—' }}</td>
-                      <td>{{ isNumericColumn(column) ? formatNumber(column.mean) : '—' }}</td>
-                      <td>{{ isNumericColumn(column) ? formatNumber(column.median) : '—' }}</td>
-                      <td>{{ isNumericColumn(column) ? formatNumber(column.stdDev) : '—' }}</td>
-                    </tr>
-                    @if (isExpanded(column.name)) {
-                      <tr class="detail-row">
-                        <td></td>
-                        <td colspan="9">
-                          <div class="detail-content">
-                            <p class="reasoning">
-                              <strong>Why this classification:</strong> {{ column.reasoning }}
-                            </p>
-                            <p class="detail-meta">
-                              Confidence: <strong>{{ confidencePercent(column) }}</strong>
-                              · Type: {{ column.dataType }}
-                              · Role: {{ column.semanticRole }}
-                              @if ((column.invalidValueCount ?? 0) > 0) {
-                                · <strong class="invalid-flag">{{ column.invalidValueCount }}</strong> value(s)
-                                did not match the detected type
-                              }
-                            </p>
-                            @if (column.outlierAnalysis; as oa) {
-                              @if (oa.outlierCount > 0) {
-                                <div class="outlier-section">
-                                  <p class="outlier-bounds">
-                                    <strong>{{ outlierSummaryText(column) }}</strong>
-                                    ({{ oa.outlierPercentage }}% of values) — normal range
-                                    {{ formatNumber(oa.lowerBound) }} …
-                                    {{ formatNumber(oa.upperBound) }} (IQR method, 1.5× IQR fences)
-                                  </p>
-                                  @if (oa.lowConfidence) {
-                                    <p class="low-confidence-note">
-                                      Small sample size — outlier detection may be unreliable.
-                                    </p>
-                                  }
-                                  @if (oa.outlierSamples?.length) {
-                                    <ul class="outlier-samples">
-                                      @for (sample of oa.outlierSamples; track $index) {
-                                        <li>
-                                          <strong>{{ formatNumber(sample.value) }}</strong>
-                                          in row #{{ sample.rowIndex + 1 }}
-                                        </li>
-                                      }
-                                    </ul>
-                                  }
-                                </div>
-                              }
-                            }
-                          </div>
-                        </td>
-                      </tr>
-                    }
-                  }
-                </tbody>
-              </table>
-            </div>
-            <p class="preview-note">Analyzed {{ a.analyzedAt | date: 'MMM d, y · HH:mm' }}</p>
-
-            @if (a.correlations; as pairs) {
-              <div class="correlations-section">
-                <h3>Correlations</h3>
-                <p class="correlations-hint">
-                  Relationships between numeric columns (Pearson r ≥ 0.5)
-                </p>
-                @if (pairs.length) {
-                  <div class="correlation-list">
-                    @for (pair of pairs; track $index) {
-                      <div class="correlation-card">
-                        <span class="pair-names">
-                          {{ pair.columnA }} <span class="pair-link">↔</span> {{ pair.columnB }}
-                        </span>
-                        <span
-                          class="direction {{ pair.direction.toLowerCase() }}"
-                          [title]="pair.direction === 'POSITIVE' ? 'Positive relationship' : 'Negative relationship'"
-                        >{{ pair.direction === 'POSITIVE' ? '↑' : '↓' }}</span>
-                        <span class="r-value">r = {{ pair.correlation }}</span>
-                        <span class="strength-badge {{ pair.strength.toLowerCase() }}">
-                          {{ strengthLabel(pair.strength) }}
-                        </span>
-                        <span class="sample-size" title="Rows where both columns had values">
-                          n = {{ pair.sampleSize }}
-                        </span>
-                        @if (pair.lowConfidence) {
-                          <span class="low-confidence-note">Small sample size</span>
-                        }
-                      </div>
-                    }
-                  </div>
-                } @else {
-                  <div class="correlations-empty">
-                    <p>No strong relationships detected between numeric columns.</p>
-                  </div>
-                }
-              </div>
-            }
-          }
-        }
-      }
-    </section>
-    }
-
-    @if (activeTab() === 'explore') {
-      <section class="explore-section">
-        <app-dataset-dashboard [embedded]="true" />
-      </section>
-    }
-
-    @if (activeTab() === 'insights') {
-      @if (analysisState() === 'ready') {
-        <app-trend-insights [projectId]="projectId" [datasetId]="d.id" />
-        <app-period-comparison [projectId]="projectId" [datasetId]="d.id" />
-        <app-period-anomalies [projectId]="projectId" [datasetId]="d.id" />
-        <app-top-performers [projectId]="projectId" [datasetId]="d.id" />
-      } @else if (analysisState() === 'not-analyzed') {
-        <div class="empty-placeholder insights-gate">
-          <p>Run the analysis to unlock trends, period comparisons, anomaly detection and top performers.</p>
-          <button type="button" class="btn-primary" (click)="selectTab('quality')">Go to Quality</button>
-        </div>
-      } @else {
-        <div class="state-block">
-          <span class="spinner"></span>
-          <p>Checking for existing analysis…</p>
-        </div>
-      }
+      </div>
     }
 
     @if (activeTab() === 'clean') {
-      <section class="cleaning-section">
-      <div class="cleaning-header">
-        <h2>Data Cleaning</h2>
-        <button type="button" class="btn-analyze" (click)="toggleCleaning()">
-          {{ cleaningOpen() ? 'Cancel' : '✨ Clean Data' }}
-        </button>
+      <div role="tabpanel" id="panel-clean" tabindex="0" aria-labelledby="tab-clean">
+        <app-cleaning-panel
+          [projectId]="d.projectId"
+          [open]="cleaningOpen()"
+          [loading]="cleaningLoading()"
+          [running]="cleaningRunning()"
+          [error]="cleaningError()"
+          [suggestions]="suggestions()"
+          [selections]="selections()"
+          [result]="cleanedResult()"
+          (toggle)="toggleCleaning()"
+          (toggleSuggestion)="onToggleSuggestion($event)"
+          (actionChange)="onActionChange($event)"
+          (customValueChange)="onCustomValueChange($event)"
+          (apply)="applyCleaning()"
+        />
       </div>
-
-      @if (cleaningOpen()) {
-        <p class="cleaning-reassurance">
-          Cleaning always creates a <strong>new dataset</strong>. Your original file is never modified.
-        </p>
-
-        @if (cleaningLoading()) {
-          <div class="state-block">
-            <span class="spinner"></span>
-            <p>Analyzing your data for cleaning opportunities…</p>
-          </div>
-        } @else if (cleaningError()) {
-          <div class="alert" role="alert">{{ cleaningError() }}</div>
-        } @else if (cleanedResult(); as result) {
-          <div class="cleaning-success">
-            <h3>Cleaning complete 🎉</h3>
-            <div class="summary-cards">
-              <article class="stat-card">
-                <span class="stat-value">{{ result.rowsBefore }}</span>
-                <span class="stat-label">Rows before</span>
-              </article>
-              <article class="stat-card">
-                <span class="stat-value">{{ result.rowsAfter }}</span>
-                <span class="stat-label">Rows after</span>
-              </article>
-              <article class="stat-card">
-                <span class="stat-value">{{ result.rowsRemoved }}</span>
-                <span class="stat-label">Rows removed</span>
-              </article>
-              <article class="stat-card">
-                <span class="stat-value">{{ result.valuesFilled }}</span>
-                <span class="stat-label">Values filled</span>
-              </article>
-            </div>
-            <p class="success-note">
-              Your cleaned dataset is ready. Open it below to preview and analyze it.
-            </p>
-            <a class="btn-primary" [routerLink]="['/projects', d.projectId, 'datasets', result.cleanedDataset.id]">
-              Open cleaned dataset →
-            </a>
-          </div>
-        } @else if (!suggestions().length) {
-          <div class="empty-placeholder">
-            <p>🎉 Your data looks clean!</p>
-            <p class="hint">No issues needing attention were found.</p>
-          </div>
-        } @else {
-          <div class="suggestion-list">
-            @for (suggestion of suggestions(); track suggestion.id) {
-              @if (selections()[suggestion.id]; as selection) {
-                <article class="suggestion-card" [class.disabled]="!selection.enabled">
-                  <label class="suggestion-toggle">
-                    <input
-                      type="checkbox"
-                      [checked]="selection.enabled"
-                      (change)="onToggleSuggestion(suggestion.id, $event)"
-                    />
-                    <span>{{ suggestion.description }}</span>
-                  </label>
-                  @if (suggestion.reasoning) {
-                    <p class="suggestion-reasoning">{{ suggestion.reasoning }}</p>
-                  }
-                  <div class="suggestion-controls">
-                    @if (suggestion.columnName) {
-                      <span class="column-tag">{{ suggestion.columnName }}</span>
-                    } @else {
-                      <span class="column-tag row-level">Whole table</span>
-                    }
-                    <span class="affected">{{ suggestion.affectedRowCount }} affected</span>
-                    <select
-                      [value]="selection.action"
-                      [disabled]="!selection.enabled"
-                      (change)="onActionChange(suggestion.id, $event)"
-                    >
-                      @for (action of [suggestion.suggestedAction, ...suggestion.alternativeActions]; track action) {
-                        <option [value]="action" [selected]="action === selection.action">
-                          {{ cleaningActionLabel(action) }}
-                        </option>
-                      }
-                    </select>
-                    @if (needsCustomValue(selection)) {
-                      <input
-                        type="text"
-                        [placeholder]="'Custom value for ' + suggestion.columnName"
-                        [value]="selection.customValue"
-                        [disabled]="!selection.enabled"
-                        (input)="onCustomValueChange(suggestion.id, $event)"
-                      />
-                    }
-                  </div>
-                </article>
-              }
-            }
-          </div>
-
-          <div class="apply-row">
-            <button
-              type="button"
-              class="btn-analyze"
-              (click)="applyCleaning()"
-              [disabled]="cleaningRunning() || enabledCount() === 0"
-            >
-              {{ cleaningRunning() ? 'Cleaning…' : 'Apply Cleaning' }}
-            </button>
-          </div>
-        }
-      }
-    </section>
     }
   }
 </section>

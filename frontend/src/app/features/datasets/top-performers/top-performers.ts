@@ -2,6 +2,7 @@ import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { PerformerEntry, PerformersPair } from '../../../core/models/insight.model';
 import { InsightService } from '../../../core/services/insight.service';
+import { formatNumber as sharedFormatNumber } from '../../../shared/format';
 
 @Component({
   selector: 'app-top-performers',
@@ -53,7 +54,7 @@ export class TopPerformers implements OnInit {
   }
 
   formatNumber(value: number): string {
-    return value.toLocaleString('en-US', { maximumFractionDigits: 2 });
+    return sharedFormatNumber(value, { maximumFractionDigits: 2 });
   }
 
   formatGap(gap: number | null): string {

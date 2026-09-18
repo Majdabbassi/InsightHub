@@ -14,6 +14,7 @@ import {
   SiblingComparisonResponse,
 } from '../../../core/models/insight.model';
 import { InsightService } from '../../../core/services/insight.service';
+import { formatNumber as sharedFormatNumber } from '../../../shared/format';
 import { RelationshipService } from '../../../core/services/relationship.service';
 
 interface ComparisonState {
@@ -75,7 +76,7 @@ export class ProjectInsights {
   }
 
   formatNumber(value: number): string {
-    return value.toLocaleString('en-US', { maximumFractionDigits: 2 });
+    return sharedFormatNumber(value, { maximumFractionDigits: 2 });
   }
 
   formatPercent(value: number | null): string {

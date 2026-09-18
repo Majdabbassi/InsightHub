@@ -1,0 +1,115 @@
+<section class="cleaning-section">
+  <div class="cleaning-header">
+    <h2>Data Cleaning</h2>
+    <button type="button" class="btn-analyze" (click)="toggle.emit()">
+      {{ open() ? 'Cancel' : '✨ Clean Data' }}
+    </button>
+  </div>
+
+  @if (open()) {
+    <p class="cleaning-reassurance">
+      Cleaning always creates a <strong>new dataset</strong>. Your original file is never modified.
+    </p>
+
+    @if (loading()) {
+      <div class="state-block">
+        <span class="spinner"></span>
+        <p>Analyzing your data for cleaning opportunities…</p>
+      </div>
+    } @else if (error()) {
+      <div class="alert" role="alert">{{ error() }}</div>
+    } @else if (result(); as result) {
+      <div class="cleaning-success">
+        <h3>Cleaning complete 🎉</h3>
+        <div class="summary-cards">
+          <article class="stat-card">
+            <span class="stat-value">{{ result.rowsBefore }}</span>
+            <span class="stat-label">Rows before</span>
+          </article>
+          <article class="stat-card">
+            <span class="stat-value">{{ result.rowsAfter }}</span>
+            <span class="stat-label">Rows after</span>
+          </article>
+          <article class="stat-card">
+            <span class="stat-value">{{ result.rowsRemoved }}</span>
+            <span class="stat-label">Rows removed</span>
+          </article>
+          <article class="stat-card">
+            <span class="stat-value">{{ result.valuesFilled }}</span>
+            <span class="stat-label">Values filled</span>
+          </article>
+        </div>
+        <p class="success-note">
+          Your cleaned dataset is ready. Open it below to preview and analyze it.
+        </p>
+        <a class="btn-primary" [routerLink]="['/projects', projectId(), 'datasets', result.cleanedDataset.id]">
+          Open cleaned dataset →
+        </a>
+      </div>
+    } @else if (!suggestions().length) {
+      <div class="empty-placeholder">
+        <p>🎉 Your data looks clean!</p>
+        <p class="hint">No issues needing attention were found.</p>
+      </div>
+    } @else {
+      <div class="suggestion-list">
+        @for (suggestion of suggestions(); track suggestion.id) {
+          @if (selections()[suggestion.id]; as selection) {
+            <article class="suggestion-card" [class.disabled]="!selection.enabled">
+              <label class="suggestion-toggle">
+                <input
+                  type="checkbox"
+                  [checked]="selection.enabled"
+                  (change)="onToggleSuggestion(suggestion.id, $event)"
+                />
+                <span>{{ suggestion.description }}</span>
+              </label>
+              @if (suggestion.reasoning) {
+                <p class="suggestion-reasoning">{{ suggestion.reasoning }}</p>
+              }
+              <div class="suggestion-controls">
+                @if (suggestion.columnName) {
+                  <span class="column-tag">{{ suggestion.columnName }}</span>
+                } @else {
+                  <span class="column-tag row-level">Whole table</span>
+                }
+                <span class="affected">{{ suggestion.affectedRowCount }} affected</span>
+                <select
+                  [value]="selection.action"
+                  [disabled]="!selection.enabled"
+                  (change)="onActionChange(suggestion.id, $event)"
+                >
+                  @for (action of [suggestion.suggestedAction, ...suggestion.alternativeActions]; track action) {
+                    <option [value]="action" [selected]="action === selection.action">
+                      {{ cleaningActionLabel(action) }}
+                    </option>
+                  }
+                </select>
+                @if (needsCustomValue(selection)) {
+                  <input
+                    type="text"
+                    [placeholder]="'Custom value for ' + suggestion.columnName"
+                    [value]="selection.customValue"
+                    [disabled]="!selection.enabled"
+                    (input)="onCustomValueChange(suggestion.id, $event)"
+                  />
+                }
+              </div>
+            </article>
+          }
+        }
+      </div>
+
+      <div class="apply-row">
+        <button
+          type="button"
+          class="btn-analyze"
+          (click)="apply.emit()"
+          [disabled]="running() || enabledCount() === 0"
+        >
+          {{ running() ? 'Cleaning…' : 'Apply Cleaning' }}
+        </button>
+      </div>
+    }
+  }
+</section>

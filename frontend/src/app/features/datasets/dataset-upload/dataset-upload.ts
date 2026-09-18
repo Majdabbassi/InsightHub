@@ -2,6 +2,7 @@ import { HttpErrorResponse, HttpEventType } from '@angular/common/http';
 import { Component, inject, output, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DatasetService } from '../../../core/services/dataset.service';
+import { formatBytes as sharedFormatBytes } from '../../../shared/format';
 
 export const MAX_DATASET_SIZE_BYTES = 20 * 1024 * 1024;
 
@@ -96,8 +97,6 @@ export class DatasetUpload {
   }
 
   formatSize(bytes: number): string {
-    if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-    if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${bytes} B`;
+    return sharedFormatBytes(bytes);
   }
 }

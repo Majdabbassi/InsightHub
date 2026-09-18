@@ -1,0 +1,272 @@
+<section class="analysis-section">
+  <div class="analysis-header">
+    <h2>Analysis</h2>
+    @if (state() === 'ready' || state() === 'not-analyzed') {
+      <button type="button" class="btn-analyze" (click)="analyze.emit()" [disabled]="state() === 'running'">
+        @if (state() === 'running') {
+          Analyzing…
+        } @else if (analysis()) {
+          ↻ Re-analyze
+        } @else {
+          ▶ Run analysis
+        }
+      </button>
+    }
+  </div>
+
+  @if (error()) {
+    <div class="alert" role="alert">{{ error() }}</div>
+  }
+
+  @switch (state()) {
+    @case ('loading') {
+      <div class="state-block">
+        <span class="spinner"></span>
+        <p>Checking for existing analysis…</p>
+      </div>
+    }
+    @case ('running') {
+      <div class="state-block running">
+        <span class="spinner"></span>
+        <p>Analyzing your dataset… this may take a few seconds.</p>
+      </div>
+    }
+    @case ('not-analyzed') {
+      <div class="empty-placeholder">
+        <p>This dataset hasn't been analyzed yet.</p>
+        <p class="hint">Run the analysis to get row/column stats, missing values, duplicates and more.</p>
+      </div>
+    }
+    @case ('ready') {
+      @if (analysis(); as a) {
+        @if (a.dataQuality; as dq) {
+          <article class="quality-card {{ gradeTier(dq.grade) }}">
+            <div class="quality-score-block">
+              <div class="quality-score-row">
+                <span class="quality-score">{{ dq.overallScore }}</span>
+                <span class="quality-grade">{{ dq.grade }}</span>
+              </div>
+              <span class="quality-caption">Data quality score</span>
+            </div>
+            <div class="quality-breakdown">
+              <div class="breakdown-row">
+                <span class="breakdown-label">Completeness</span>
+                <div class="breakdown-bar">
+                  <div class="breakdown-fill" [style.width.%]="breakdownPercent(dq.breakdown.completeness)"></div>
+                </div>
+                <span class="breakdown-value">{{ breakdownPercent(dq.breakdown.completeness) }}%</span>
+              </div>
+              <div class="breakdown-row">
+                <span class="breakdown-label">Uniqueness</span>
+                <div class="breakdown-bar">
+                  <div class="breakdown-fill" [style.width.%]="breakdownPercent(dq.breakdown.uniqueness)"></div>
+                </div>
+                <span class="breakdown-value">{{ breakdownPercent(dq.breakdown.uniqueness) }}%</span>
+              </div>
+              <div class="breakdown-row">
+                <span class="breakdown-label">Consistency</span>
+                <div class="breakdown-bar">
+                  <div class="breakdown-fill" [style.width.%]="breakdownPercent(dq.breakdown.consistency)"></div>
+                </div>
+                <span class="breakdown-value">{{ breakdownPercent(dq.breakdown.consistency) }}%</span>
+              </div>
+              <div class="breakdown-row">
+                <span class="breakdown-label">Validity</span>
+                <div class="breakdown-bar">
+                  <div class="breakdown-fill" [style.width.%]="breakdownPercent(dq.breakdown.validity)"></div>
+                </div>
+                <span class="breakdown-value">{{ breakdownPercent(dq.breakdown.validity) }}%</span>
+              </div>
+            </div>
+          </article>
+        }
+
+        <div class="summary-cards">
+          <article class="stat-card">
+            <span class="stat-value">{{ formatNumber(a.rowCount) }}</span>
+            <span class="stat-label">Rows</span>
+          </article>
+          <article class="stat-card">
+            <span class="stat-value">{{ formatNumber(a.columnCount) }}</span>
+            <span class="stat-label">Columns</span>
+          </article>
+          <article class="stat-card">
+            <span class="stat-value">{{ formatNumber(a.duplicateRowCount) }}</span>
+            <span class="stat-label">Duplicate rows</span>
+          </article>
+          <article class="stat-card">
+            <span class="stat-value">{{ formatNumber(a.totalMissingValues) }}</span>
+            <span class="stat-label">Missing values</span>
+          </article>
+        </div>
+
+        <div class="table-scroll">
+          <table class="analysis-table">
+            <thead>
+              <tr>
+                <th>Column</th>
+                <th>Role</th>
+                <th>Type</th>
+                <th>Missing</th>
+                <th>Unique</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Mean</th>
+                <th>Median</th>
+                <th>Std Dev</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (column of a.columns; track column.name) {
+                <tr
+                  [class.expandable]="column.reasoning || hasOutliers(column)"
+                  [class.expanded]="isExpanded()(column.name)"
+                  (click)="toggleColumnDetails(column.name)"
+                >
+                  <td class="col-name">
+                    {{ column.name }}
+                    @if (needsAttention(column)) {
+                      <span
+                        class="warning-icon"
+                        role="img"
+                        aria-label="Data quality warning"
+                        [title]="roleWarning(column)"
+                      >⚠</span>
+                    }
+                    @if (hasOutliers(column)) {
+                      <span class="outlier-chip" title="Click the row for outlier details">
+                        {{ outlierSummaryText(column) }}
+                      </span>
+                    }
+                    @if (column.topValues?.length) {
+                      <span class="top-values" [title]="topValuesText(column)">
+                        Top: {{ topValuesText(column) }}
+                      </span>
+                    }
+                  </td>
+                  <td class="role-cell" (click)="$event.stopPropagation()">
+                    @if (column.semanticRole) {
+                      <button
+                        type="button"
+                        class="role-badge {{ roleClass(column) }}"
+                        [title]="column.reasoning"
+                        (click)="toggleColumnDetails(column.name)"
+                        [attr.aria-expanded]="isExpanded()(column.name)"
+                      >
+                        {{ roleLabel(column) }}
+                      </button>
+                    } @else {
+                      <span class="no-role">—</span>
+                    }
+                  </td>
+                  <td><span class="type-badge {{ column.dataType }}">{{ column.dataType }}</span></td>
+                  <td>
+                    {{ column.missingPercentage }}% ({{ column.missingCount }})
+                    @if ((column.invalidValueCount ?? 0) > 0) {
+                      <span class="invalid-count" [title]="invalidValuesText(column)">
+                        · {{ column.invalidValueCount }} invalid
+                      </span>
+                    }
+                  </td>
+                  <td>{{ formatNumber(column.uniqueCount) }}</td>
+                  <td>{{ isNumericColumn(column) ? formatNumber(column.min) : '—' }}</td>
+                  <td>{{ isNumericColumn(column) ? formatNumber(column.max) : '—' }}</td>
+                  <td>{{ isNumericColumn(column) ? formatNumber(column.mean) : '—' }}</td>
+                  <td>{{ isNumericColumn(column) ? formatNumber(column.median) : '—' }}</td>
+                  <td>{{ isNumericColumn(column) ? formatNumber(column.stdDev) : '—' }}</td>
+                </tr>
+                @if (isExpanded()(column.name)) {
+                  <tr class="detail-row">
+                    <td></td>
+                    <td colspan="9">
+                      <div class="detail-content">
+                        <p class="reasoning">
+                          <strong>Why this classification:</strong> {{ column.reasoning }}
+                        </p>
+                        <p class="detail-meta">
+                          Confidence: <strong>{{ confidencePercent(column) }}</strong>
+                          · Type: {{ column.dataType }}
+                          · Role: {{ column.semanticRole }}
+                          @if ((column.invalidValueCount ?? 0) > 0) {
+                            · <strong class="invalid-flag">{{ column.invalidValueCount }}</strong> value(s)
+                            did not match the detected type
+                          }
+                        </p>
+                        @if (column.outlierAnalysis; as oa) {
+                          @if (oa.outlierCount > 0) {
+                            <div class="outlier-section">
+                              <p class="outlier-bounds">
+                                <strong>{{ outlierSummaryText(column) }}</strong>
+                                ({{ oa.outlierPercentage }}% of values) — normal range
+                                {{ formatNumber(oa.lowerBound) }} …
+                                {{ formatNumber(oa.upperBound) }} (IQR method, 1.5× IQR fences)
+                              </p>
+                              @if (oa.lowConfidence) {
+                                <p class="low-confidence-note">
+                                  Small sample size — outlier detection may be unreliable.
+                                </p>
+                              }
+                              @if (oa.outlierSamples?.length) {
+                                <ul class="outlier-samples">
+                                  @for (sample of oa.outlierSamples; track $index) {
+                                    <li>
+                                      <strong>{{ formatNumber(sample.value) }}</strong>
+                                      in row #{{ sample.rowIndex + 1 }}
+                                    </li>
+                                  }
+                                </ul>
+                              }
+                            </div>
+                          }
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+        <p class="preview-note">Analyzed {{ a.analyzedAt | date: 'MMM d, y · HH:mm' }}</p>
+
+        @if (a.correlations; as pairs) {
+          <div class="correlations-section">
+            <h3>Correlations</h3>
+            <p class="correlations-hint">
+              Relationships between numeric columns (Pearson r ≥ 0.5)
+            </p>
+            @if (pairs.length) {
+              <div class="correlation-list">
+                @for (pair of pairs; track $index) {
+                  <div class="correlation-card">
+                    <span class="pair-names">
+                      {{ pair.columnA }} <span class="pair-link">↔</span> {{ pair.columnB }}
+                    </span>
+                    <span
+                      class="direction {{ pair.direction.toLowerCase() }}"
+                      [title]="pair.direction === 'POSITIVE' ? 'Positive relationship' : 'Negative relationship'"
+                    >{{ pair.direction === 'POSITIVE' ? '↑' : '↓' }}</span>
+                    <span class="r-value">r = {{ pair.correlation }}</span>
+                    <span class="strength-badge {{ pair.strength.toLowerCase() }}">
+                      {{ strengthLabel(pair.strength) }}
+                    </span>
+                    <span class="sample-size" title="Rows where both columns had values">
+                      n = {{ pair.sampleSize }}
+                    </span>
+                    @if (pair.lowConfidence) {
+                      <span class="low-confidence-note">Small sample size</span>
+                    }
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="correlations-empty">
+                <p>No strong relationships detected between numeric columns.</p>
+              </div>
+            }
+          </div>
+        }
+      }
+    }
+  }
+</section>

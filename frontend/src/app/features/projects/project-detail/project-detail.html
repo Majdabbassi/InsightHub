@@ -180,14 +180,14 @@
 
   @if (datasetPendingDelete(); as dataset) {
     <div class="modal-backdrop" (click)="cancelDelete()">
-      <div class="modal" (click)="$event.stopPropagation()">
-        <h3>Delete dataset</h3>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="delete-dataset-title" (click)="$event.stopPropagation()">
+        <h3 id="delete-dataset-title">Delete dataset</h3>
         <p>
           Are you sure you want to delete <strong>{{ dataset.name }}</strong
           >? The file will be removed and this cannot be undone.
         </p>
         <div class="modal-actions">
-          <button type="button" class="btn-secondary" (click)="cancelDelete()">Cancel</button>
+          <button type="button" class="btn-secondary" (click)="cancelDelete()" autofocus>Cancel</button>
           <button type="button" class="btn-danger" (click)="confirmDelete()" [disabled]="deleting()">
             {{ deleting() ? 'Deleting…' : 'Delete' }}
           </button>

@@ -1,0 +1,54 @@
+<section class="preview-section">
+  <div class="preview-header">
+    <h2>Preview</h2>
+    <label class="rows-picker">
+      Rows:
+      <select
+        (change)="onRowsChange($event)"
+        [value]="rows()"
+        [disabled]="loading()"
+      >
+        @for (option of rowOptions(); track option) {
+          <option [value]="option">{{ option }}</option>
+        }
+      </select>
+    </label>
+  </div>
+
+  @if (preview(); as p) {
+    @if (!p.columns.length && !p.rows.length) {
+      <div class="empty-placeholder">
+        <p>This CSV appears to be empty.</p>
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th class="rownum">#</th>
+              @for (column of p.columns; track $index) {
+                <th>{{ column }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of p.rows; track $index) {
+              <tr>
+                <td class="rownum">{{ $index + 1 }}</td>
+                @for (cell of row; track $index) {
+                  <td>{{ cell }}</td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="preview-note">
+        Showing first {{ p.rows.length }} of the file's rows
+        @if (rowCount() === null) {
+          — full row/column counts will be filled in after analysis.
+        }
+      </p>
+    }
+  }
+</section>

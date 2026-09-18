@@ -3,6 +3,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { ChatMessage } from '../models/chat.model';
 import { Page } from '../models/page.model';
 import { environment } from '../../../environments/environment';
+import { isServiceUnavailable, readErrorMessage } from '../../shared/errors';
 
 @Injectable({ providedIn: 'root' })
 export class ChatService {
@@ -77,10 +78,10 @@ export class ChatService {
   }
 }
 
-function extractError(err: { status?: number; error?: { message?: string } }): string {
-  if (err.status === 503) {
-    return err.error?.message
+function extractError(err: unknown): string {
+  if (isServiceUnavailable(err)) {
+    return readErrorMessage(err)
       ?? 'The AI assistant is unavailable. Please make sure Ollama is running and the model is pulled.';
   }
-  return err.error?.message ?? 'Could not send the message. Please try again.';
+  return readErrorMessage(err) ?? 'Could not send the message. Please try again.';
 }

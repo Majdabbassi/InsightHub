@@ -211,6 +211,53 @@ export class RelationshipDiagram {
     return this.dragState?.nodeId === nodeId && this.dragState.moved;
   }
 
+  /** Keyboard alternative to mouse selection: Enter/Space selects, arrows
+   *  (plus Home/End) move focus between node cards. */
+  onNodeKeydown(event: KeyboardEvent, node: DiagramNode): void {
+    const nodes = this.nodes();
+    const index = nodes.findIndex((candidate) => candidate.id === node.id);
+    if (index === -1) {
+      return;
+    }
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.selectedNodeId.update((current) => (current === node.id ? null : node.id));
+      this.selectedRelId.set(null);
+      this.panelError.set('');
+      return;
+    }
+    let nextIndex = -1;
+    switch (event.key) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+        nextIndex = index + 1;
+        break;
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        nextIndex = index - 1;
+        break;
+      case 'Home':
+        nextIndex = 0;
+        break;
+      case 'End':
+        nextIndex = nodes.length - 1;
+        break;
+      default:
+        return;
+    }
+    if (nextIndex < 0 || nextIndex >= nodes.length) {
+      return;
+    }
+    event.preventDefault();
+    this.selectedNodeId.set(null);
+    this.selectedRelId.set(null);
+    this.panelError.set('');
+    const targetId = nodes[nextIndex].id;
+    this.canvasRef()
+      .nativeElement.querySelector<HTMLElement>(`[data-node-id="${targetId}"]`)
+      ?.focus();
+  }
+
   selectEdge(relId: number): void {
     this.selectedNodeId.set(null);
     this.selectedRelId.update((current) => (current === relId ? null : relId));

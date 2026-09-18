@@ -2,6 +2,7 @@ import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComparisonDriver, PeriodComparisonResponse } from '../../../core/models/insight.model';
 import { InsightService, PeriodComparisonParams } from '../../../core/services/insight.service';
+import { formatNumber as sharedFormatNumber } from '../../../shared/format';
 
 @Component({
   selector: 'app-period-comparison',
@@ -92,7 +93,7 @@ export class PeriodComparison implements OnInit {
   }
 
   formatNumber(value: number): string {
-    return value.toLocaleString('en-US', { maximumFractionDigits: 2 });
+    return sharedFormatNumber(value, { maximumFractionDigits: 2 });
   }
 
   formatPercent(percentChange: number | null): string {

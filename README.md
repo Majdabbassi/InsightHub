@@ -23,6 +23,18 @@ Built as an end-to-end learning project spanning a full analytics pipeline: inge
 
 ![Relationship Diagram](docs/screenshots/relationships.png)
 
+## 🎬 Walkthrough
+
+The 60-second end-to-end demo (upload → analysis → cleaning → dashboard →
+insights → relationship diagram → AI assistant) is available as a short GIF:
+
+```text
+docs/walkthrough.gif   ← drop your recording here (≤ a few MB)
+```
+
+Until the recording is added, see [`docs/DEMO.md`](docs/DEMO.md) for the scripted
+tour and use the samples in [`samples/`](samples/) to follow along.
+
 ## Demo data
 
 Ready-to-upload sample CSVs live in [`samples/`](samples/): a small,
@@ -178,6 +190,23 @@ relationships) are still verified mainly through targeted scripts and manual
 end-to-end checks against engineered CSVs with known ground-truth values (e.g.
 a 2,100-row stress test with pre-computed expected outlier counts and
 correlation coefficients, cross-checked against actual output).
+
+## Engineering decisions
+
+Key architectural choices and their trade-offs are recorded as lightweight
+ADRs in [`docs/adr/`](docs/adr/) and summarized in
+[`docs/architecture.md`](docs/architecture.md):
+
+- **JWT stateless auth** with short-lived tokens and client-side expiry checks;
+  see [`docs/SECURITY.md`](docs/SECURITY.md) for the (documented) token-storage trade-off.
+- **Dedicated analytics-service** (FastAPI + DuckDB) so heavy pandas work never
+  starves the REST API; the frontend only ever talks to the Spring backend.
+- **Angular standalone components + signals** for maintainable state flow
+  (the dataset viewer was split into focused sub-components rather than one
+  ~800-line god component).
+- **Flyway-managed schema** with Hibernate lazy-loading (open-in-view off)
+  and ownership checks on every project/dataset endpoint.
+- **Local Ollama** as the LLM — no data or credentials leave your machine.
 
 ## Known limitations
 

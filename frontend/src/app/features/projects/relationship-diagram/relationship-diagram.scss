@@ -216,6 +216,11 @@
     box-shadow: 0 10px 22px rgb(17 24 39 / 18%);
   }
 
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
   &.selected {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgb(79 70 229 / 18%);

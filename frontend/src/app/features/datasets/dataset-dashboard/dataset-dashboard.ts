@@ -11,6 +11,11 @@ import {
 } from '../../../core/models/dashboard.model';
 import { Dataset } from '../../../core/models/dataset.model';
 import { DatasetService } from '../../../core/services/dataset.service';
+import { Icon } from '../../../shared/icons/icon';
+import {
+  formatNumber as sharedFormatNumber,
+  formatPercent as sharedFormatPercent,
+} from '../../../shared/format';
 
 interface ChartState {
   loading: boolean;
@@ -20,7 +25,7 @@ interface ChartState {
 
 @Component({
   selector: 'app-dataset-dashboard',
-  imports: [RouterLink, ChartComponent],
+  imports: [RouterLink, ChartComponent, Icon],
   templateUrl: './dataset-dashboard.html',
   styleUrl: './dataset-dashboard.scss',
 })
@@ -345,10 +350,10 @@ export class DatasetDashboard implements OnInit {
   }
 
   formatNumber(value: number | null | undefined): string {
-    return value === null || value === undefined ? '—' : value.toLocaleString();
+    return sharedFormatNumber(value);
   }
 
   formatPercent(value: number): string {
-    return value.toFixed(1) + '%';
+    return sharedFormatPercent(value);
   }
 }

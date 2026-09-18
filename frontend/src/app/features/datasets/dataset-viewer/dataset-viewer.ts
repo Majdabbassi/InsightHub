@@ -1,12 +1,9 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AnalysisResult } from '../../../core/models/analysis.model';
 import {
-  AnalysisColumnStat,
-  AnalysisResult,
-  SemanticRole,
-} from '../../../core/models/analysis.model';import {
   CleanedDatasetResponse,
   CleaningActionType,
   CleaningSuggestion,
@@ -14,46 +11,40 @@ import {
 } from '../../../core/models/cleaning.model';
 import { CsvPreview, Dataset } from '../../../core/models/dataset.model';
 import { DatasetService } from '../../../core/services/dataset.service';
+import { friendlyErrorMessage, httpErrorStatus, readErrorMessage } from '../../../shared/errors';
+import { formatBytes } from '../../../shared/format';
 import { TrendInsights } from '../trend-insights/trend-insights';
 import { PeriodComparison } from '../period-comparison/period-comparison';
 import { PeriodAnomalies } from '../period-anomalies/period-anomalies';
 import { TopPerformers } from '../top-performers/top-performers';
 import { DatasetDashboard } from '../dataset-dashboard/dataset-dashboard';
-
-type ViewerTab = 'data' | 'quality' | 'explore' | 'insights' | 'clean';
-const VIEWER_TABS: readonly ViewerTab[] = ['data', 'quality', 'explore', 'insights', 'clean'];
-
-type AnalysisState = 'not-analyzed' | 'loading' | 'running' | 'ready';
-
-interface CleaningSelection {
-  enabled: boolean;
-  action: CleaningActionType;
-  customValue: string;
-}
-
-const ROLE_LABELS: Record<SemanticRole, string> = {
-  IDENTIFIER: 'Identifier',
-  BOOLEAN: 'Boolean',
-  TEMPORAL: 'Date',
-  FREE_TEXT: 'Free text',
-  CATEGORICAL: 'Categorical',
-  NUMERIC_DISCRETE: 'Numeric',
-  NUMERIC_CONTINUOUS: 'Numeric',
-  CONSTANT: 'Constant',
-  EMPTY: 'Empty',
-  INCONSISTENT: 'Inconsistent',
-};
-
-const ROLE_WARNINGS: Partial<Record<SemanticRole, string>> = {
-  INCONSISTENT:
-    'This column mixes incompatible value types (e.g. numbers and text). Consider cleaning it.',
-  CONSTANT: 'Every row holds the same value — this column carries no information.',
-  EMPTY: 'This column contains no data at all.',
-};
+import { PreviewTable } from './preview-table/preview-table';
+import { QualityAnalysis } from './quality-analysis/quality-analysis';
+import { CleaningPanel } from './cleaning-panel/cleaning-panel';
+import {
+  ActionChangeEvent,
+  AnalysisState,
+  CleaningSelection,
+  CustomValueChangeEvent,
+  ToggleSuggestionEvent,
+  ViewerTab,
+  VIEWER_TABS,
+} from './dataset-viewer.types';
 
 @Component({
   selector: 'app-dataset-viewer',
-  imports: [DatePipe, RouterLink, TrendInsights, PeriodComparison, PeriodAnomalies, TopPerformers, DatasetDashboard],
+  imports: [
+    DatePipe,
+    RouterLink,
+    PreviewTable,
+    QualityAnalysis,
+    CleaningPanel,
+    TrendInsights,
+    PeriodComparison,
+    PeriodAnomalies,
+    TopPerformers,
+    DatasetDashboard,
+  ],
   templateUrl: './dataset-viewer.html',
   styleUrl: './dataset-viewer.scss',
 })
@@ -79,6 +70,37 @@ export class DatasetViewer implements OnInit {
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
+  }
+
+  /** Arrow-key / Home / End navigation for the tablist (WAI-ARIA tabs pattern). */
+  onTabKeydown(event: KeyboardEvent, current: ViewerTab): void {
+    const index = VIEWER_TABS.indexOf(current);
+    if (index === -1) {
+      return;
+    }
+    let nextIndex = index;
+    switch (event.key) {
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        nextIndex = (index - 1 + VIEWER_TABS.length) % VIEWER_TABS.length;
+        break;
+      case 'ArrowRight':
+      case 'ArrowDown':
+        nextIndex = (index + 1) % VIEWER_TABS.length;
+        break;
+      case 'Home':
+        nextIndex = 0;
+        break;
+      case 'End':
+        nextIndex = VIEWER_TABS.length - 1;
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    this.selectTab(VIEWER_TABS[nextIndex]);
+    const target = document.getElementById(`tab-${VIEWER_TABS[nextIndex]}`);
+    target?.focus();
   }
 
   private applyQueryParamTab(tab: string | null): void {
@@ -131,10 +153,6 @@ export class DatasetViewer implements OnInit {
   readonly suggestions = signal<CleaningSuggestion[]>([]);
   readonly selections = signal<Record<string, CleaningSelection>>({});
   readonly cleanedResult = signal<CleanedDatasetResponse | null>(null);
-
-  readonly columnIndexes = computed(() =>
-    this.preview()?.columns.map((_, index) => index) ?? []
-  );
 
   ngOnInit(): void {
     this.applyQueryParamTab(this.route.snapshot.queryParamMap.get('tab'));
@@ -207,10 +225,9 @@ export class DatasetViewer implements OnInit {
     });
   }
 
-  onRowsChange(event: Event): void {
-    const value = Number((event.target as HTMLSelectElement).value);
-    if (value && value !== this.previewRows()) {
-      this.previewRows.set(value);
+  onRowsChange(rows: number): void {
+    if (rows !== this.previewRows()) {
+      this.previewRows.set(rows);
       this.reloadPreview();
     }
   }
@@ -249,6 +266,10 @@ export class DatasetViewer implements OnInit {
         this.errorMessage.set('Download failed. Please try again.');
       },
     });
+  }
+
+  formatSize(bytes: number): string {
+    return formatBytes(bytes);
   }
 
   // ===== Analysis =====
@@ -300,16 +321,18 @@ export class DatasetViewer implements OnInit {
   }
 
   private friendlyAnalysisError(err: HttpErrorResponse): string {
-    if (err.status === 503) {
-      return 'The analytics service is currently unavailable. Please try again in a moment.';
+    const status = httpErrorStatus(err);
+    if (status === 422) {
+      return readErrorMessage(err) ?? 'This file could not be analyzed as a CSV.';
     }
-    if (err.status === 422) {
-      return err.error?.message ?? 'This file could not be analyzed as a CSV.';
-    }
-    if (err.status === 404) {
+    if (status === 404) {
       return 'This dataset no longer exists.';
     }
-    return err.error?.message ?? 'Analysis failed. Please try again.';
+    return friendlyErrorMessage(
+      err,
+      'Analysis failed. Please try again.',
+      'The analytics service is currently unavailable. Please try again in a moment.',
+    );
   }
 
   // ===== Cleaning =====
@@ -348,45 +371,36 @@ export class DatasetViewer implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         this.cleaningLoading.set(false);
-        this.cleaningError.set(this.cleaningFriendlyError(err));
+        this.cleaningError.set(
+          friendlyErrorMessage(
+            err,
+            'Cleaning failed. Please try again.',
+            'The analytics service is currently unavailable. Please try again in a moment.',
+          ),
+        );
       },
     });
   }
 
-  enabledCount(): number {
-    let count = 0;
-    for (const selection of Object.values(this.selections())) {
-      if (selection.enabled) count++;
-    }
-    return count;
-  }
-
-  onToggleSuggestion(id: string, event: Event): void {
-    const checked = (event.target as HTMLInputElement).checked;
+  onToggleSuggestion(event: ToggleSuggestionEvent): void {
     this.selections.update((current) => ({
       ...current,
-      [id]: { ...current[id], enabled: checked },
+      [event.id]: { ...current[event.id], enabled: event.checked },
     }));
   }
 
-  onActionChange(id: string, event: Event): void {
-    const action = (event.target as HTMLSelectElement).value as CleaningActionType;
+  onActionChange(event: ActionChangeEvent): void {
     this.selections.update((current) => ({
       ...current,
-      [id]: { ...current[id], action },
+      [event.id]: { ...current[event.id], action: event.action },
     }));
   }
 
-  onCustomValueChange(id: string, event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
+  onCustomValueChange(event: CustomValueChangeEvent): void {
     this.selections.update((current) => ({
       ...current,
-      [id]: { ...current[id], customValue: value },
+      [event.id]: { ...current[event.id], customValue: event.value },
     }));
-  }
-
-  needsCustomValue(selection: CleaningSelection): boolean {
-    return selection.action === CleaningActionType.FILL_CUSTOM_VALUE;
   }
 
   applyCleaning(): void {
@@ -403,7 +417,9 @@ export class DatasetViewer implements OnInit {
       actions.push({
         columnName: suggestion.columnName,
         actionType: selection.action,
-        customValue: this.needsCustomValue(selection) ? selection.customValue : null,
+        customValue: selection.action === CleaningActionType.FILL_CUSTOM_VALUE
+          ? selection.customValue
+          : null,
       });
     }
 
@@ -422,137 +438,14 @@ export class DatasetViewer implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         this.cleaningRunning.set(false);
-        this.cleaningError.set(this.cleaningFriendlyError(err));
+        this.cleaningError.set(
+          friendlyErrorMessage(
+            err,
+            'Cleaning failed. Please try again.',
+            'The analytics service is currently unavailable. Please try again in a moment.',
+          ),
+        );
       },
     });
   }
-
-  private cleaningFriendlyError(err: HttpErrorResponse): string {
-    if (err.status === 0 || err.status === 503) {
-      return 'The analytics service is currently unavailable. Please try again in a moment.';
-    }
-    return err.error?.message ?? 'Cleaning failed. Please try again.';
-  }
-
-  cleaningActionLabel(action: CleaningActionType): string {
-    return this.datasetService.cleaningActionLabel(action);
-  }
-
-  formatSize(bytes: number): string {
-    if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-    if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${bytes} B`;
-  }
-
-  formatNumber(value: number | null | undefined): string {
-    return value === null || value === undefined ? '—' : value.toLocaleString();
-  }
-
-  isNumericColumn(column: AnalysisColumnStat): boolean {
-    if (column.semanticRole) {
-      return (
-        column.semanticRole === 'NUMERIC_DISCRETE' ||
-        column.semanticRole === 'NUMERIC_CONTINUOUS'
-      );
-    }
-    return column.dataType === 'integer' || column.dataType === 'float';
-  }
-
-  topValuesText(column: AnalysisColumnStat): string {
-    return (column.topValues ?? [])
-      .map((tv) => `${truncate(tv.value, 20)} (${tv.count})`)
-      .join(', ');
-  }
-
-  // ===== Semantic roles =====
-
-  roleLabel(column: AnalysisColumnStat): string {
-    return column.semanticRole
-      ? (ROLE_LABELS[column.semanticRole] ?? column.semanticRole)
-      : '';
-  }
-
-  // ===== Outliers =====
-
-  hasOutliers(column: AnalysisColumnStat): boolean {
-    return !!column.outlierAnalysis && column.outlierAnalysis.outlierCount > 0;
-  }
-
-  // ===== Correlations =====
-
-  strengthLabel(strength: string): string {
-    const labels: Record<string, string> = {
-      MODERATE: 'Moderate',
-      STRONG: 'Strong',
-      VERY_STRONG: 'Very strong',
-    };
-    return labels[strength] ?? strength;
-  }
-
-  // ===== Data quality =====
-
-  gradeTier(grade: string): 'good' | 'fair' | 'poor' {
-    if (grade === 'A' || grade === 'B') {
-      return 'good';
-    }
-    return grade === 'C' ? 'fair' : 'poor';
-  }
-
-  qualityPercent(value: number): number {
-    return Math.round(value * 100);
-  }
-
-  outlierSummaryText(column: AnalysisColumnStat): string {
-    const oa = column.outlierAnalysis;
-    if (!oa || oa.outlierCount === 0) {
-      return '';
-    }
-    const plural = oa.outlierCount === 1 ? 'outlier' : 'outliers';
-    return oa.extremeCount > 0
-      ? `${oa.outlierCount} ${plural} (${oa.extremeCount} extreme)`
-      : `${oa.outlierCount} ${plural}`;
-  }
-
-  roleClass(column: AnalysisColumnStat): string {
-    return column.semanticRole ? column.semanticRole.toLowerCase() : '';
-  }
-
-  /** Roles that are data-quality signals in themselves. */
-  needsAttention(column: AnalysisColumnStat): boolean {
-    return !!column.semanticRole && ROLE_WARNINGS[column.semanticRole] !== undefined;
-  }
-
-  roleWarning(column: AnalysisColumnStat): string {
-    return column.semanticRole ? (ROLE_WARNINGS[column.semanticRole] ?? '') : '';
-  }
-
-  confidencePercent(column: AnalysisColumnStat): string {
-    return `${Math.round((column.confidence ?? 0) * 100)}%`;
-  }
-
-  invalidValuesText(column: AnalysisColumnStat): string {
-    return `${column.invalidValueCount ?? 0} value(s) did not match this column's detected type.`;
-  }
-
-  readonly expandedColumns = signal<Set<string>>(new Set());
-
-  toggleColumnDetails(name: string): void {
-    this.expandedColumns.update((current) => {
-      const next = new Set(current);
-      if (next.has(name)) {
-        next.delete(name);
-      } else {
-        next.add(name);
-      }
-      return next;
-    });
-  }
-
-  isExpanded(name: string): boolean {
-    return this.expandedColumns().has(name);
-  }
-}
-
-function truncate(value: string, max: number): string {
-  return value.length > max ? `${value.slice(0, max)}…` : value;
 }
