@@ -1,0 +1,7 @@
+# Runtime dependencies (pinned for reproducible builds).
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+pandas==2.3.3
+numpy==2.2.6
+python-multipart==0.0.32
+duckdb==1.5.5
