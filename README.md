@@ -25,15 +25,9 @@ Built as an end-to-end learning project spanning a full analytics pipeline: inge
 
 ## 🎬 Walkthrough
 
-The 60-second end-to-end demo (upload → analysis → cleaning → dashboard →
-insights → relationship diagram → AI assistant) is available as a short GIF:
-
-```text
-docs/walkthrough.gif   ← drop your recording here (≤ a few MB)
-```
-
-Until the recording is added, see [`docs/DEMO.md`](docs/DEMO.md) for the scripted
-tour and use the samples in [`samples/`](samples/) to follow along.
+See [`docs/DEMO.md`](docs/DEMO.md) for a scripted end-to-end tour
+(upload → analysis → cleaning → dashboard → insights → relationship diagram →
+AI assistant), and use the samples in [`samples/`](samples/) to follow along.
 
 ## Demo data
 
@@ -85,7 +79,7 @@ The frontend talks to the backend through an nginx reverse proxy (`/api/*`), so 
 ## Running it
 
 ```bash
-git clone https://github.com/<you>/InsightHub.git
+git clone https://github.com/Majdabbassi/InsightHub.git
 cd InsightHub
 cp .env.example .env
 # edit .env — JWT_SECRET especially (generate with: openssl rand -base64 64)

@@ -145,7 +145,7 @@ erDiagram
 
 ## Documentation map
 
-- `README.md` – quick start, env variables, GIF walkthrough
+- `README.md` – quick start, env variables, demo data
 - `docs/EVALUATION.md` – grading criteria and evidence
 - `docs/DEMO.md` – demo script
 - `docs/SECURITY.md` – security model and trade-offs
