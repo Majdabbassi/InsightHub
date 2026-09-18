@@ -3,9 +3,9 @@
     "MD013": false,
     "MD033": false,
     "MD034": false,
+    "MD060": false,
     "MD040": true,
     "MD047": true,
-    "MD031": true,
-    "MD060": { "style": "compact" }
+    "MD031": true
   }
 }

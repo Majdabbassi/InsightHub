@@ -8,6 +8,10 @@ import com.dataanalytics.backend.service.OverviewService;
 import com.dataanalytics.backend.service.ProjectService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,8 +24,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -40,8 +42,11 @@ public class ProjectController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProjectResponse>> list(@AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(projectService.listProjects(userDetails.getUsername()));
+    public ResponseEntity<Page<ProjectResponse>> list(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PageableDefault(size = 50, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable) {
+        return ResponseEntity.ok(projectService.listProjects(userDetails.getUsername(), pageable));
     }
 
     @GetMapping("/{id}")

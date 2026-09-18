@@ -7,6 +7,10 @@ import com.dataanalytics.backend.service.ChatService;
 import com.dataanalytics.backend.service.ProjectService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,8 +21,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 /**
  * AI assistant chat for a project. One conversation per project; answers are
@@ -43,12 +45,15 @@ public class ChatController {
     }
 
     @GetMapping("/history")
-    public ResponseEntity<List<ChatMessageResponse>> history(
+    public ResponseEntity<Page<ChatMessageResponse>> history(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable Long projectId) {
+            @PathVariable Long projectId,
+            @PageableDefault(size = 50, sort = {"createdAt", "id"},
+                    direction = Sort.Direction.DESC)
+            Pageable pageable) {
         Project project = projectService.findOwnedProject(
                 userDetails.getUsername(), projectId);
-        return ResponseEntity.ok(chatService.history(project));
+        return ResponseEntity.ok(chatService.history(project, pageable));
     }
 
     @DeleteMapping("/history")

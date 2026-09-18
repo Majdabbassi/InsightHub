@@ -1,12 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   CreateProjectRequest,
   Project,
   UpdateProjectRequest,
 } from '../models/project.model';
+import { Page } from '../models/page.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProjectService {
@@ -18,8 +19,8 @@ export class ProjectService {
 
   getProjects(): Observable<Project[]> {
     return this.http
-      .get<Project[]>(this.apiUrl)
-      .pipe(tap((projects) => this.projectsSignal.set(projects)));
+      .get<Page<Project>>(this.apiUrl)
+      .pipe(map((page) => page.content), tap((projects) => this.projectsSignal.set(projects)));
   }
 
   getProject(id: number): Observable<Project> {

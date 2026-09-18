@@ -1,0 +1,6 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=analysis --cov=anomalies --cov=cleaning --cov=duckdb_query --cov=insights --cov=main --cov=performers --cov=period_comparison --cov=project_insights --cov=schemas --cov-report=term-missing --cov-report=lcov"
+
+[tool.coverage.run]
+disable_warnings = ["module-not-imported"]

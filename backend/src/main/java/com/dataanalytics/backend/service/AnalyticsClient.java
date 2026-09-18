@@ -16,6 +16,7 @@ import com.dataanalytics.backend.exception.AnalysisFailedException;
 import com.dataanalytics.backend.exception.AnalyticsServiceUnavailableException;
 import com.dataanalytics.backend.exception.CleaningFailedException;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
@@ -36,12 +37,16 @@ import java.net.http.HttpClient;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Client for the FastAPI analytics microservice. Forwards stored dataset
  * files to POST /analyze and maps failures to clean backend exceptions.
+ * Transient failures (connection errors and HTTP 5xx) are retried with
+ * exponential backoff; client errors (4xx) are never retried.
  */
 @Service
+@Slf4j
 public class AnalyticsClient {
 
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
@@ -49,8 +54,12 @@ public class AnalyticsClient {
 
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
+    private final int maxAttempts;
+    private final long backoffMillis;
 
     public AnalyticsClient(@Value("${analytics.service.url}") String baseUrl,
+                           @Value("${analytics.client.retry.max-attempts:3}") int maxAttempts,
+                           @Value("${analytics.client.retry.backoff-millis:500}") long backoffMillis,
                            ObjectMapper objectMapper) {
         JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(
                 HttpClient.newBuilder()
@@ -66,6 +75,53 @@ public class AnalyticsClient {
                 .requestFactory(requestFactory)
                 .build();
         this.objectMapper = objectMapper;
+        this.maxAttempts = Math.max(1, maxAttempts);
+        this.backoffMillis = Math.max(0, backoffMillis);
+    }
+
+    /**
+     * Executes an analytics call, retrying only transient failures: transport
+     * errors ({@link ResourceAccessException}) and HTTP 5xx responses. Each
+     * retry waits {@code backoffMillis * 2^(attempt-1)} before the next call
+     * and rethrows the last failure once {@code maxAttempts} are exhausted.
+     * HTTP 4xx responses are rethrown immediately (they are contract errors,
+     * not transient failures).
+     */
+    private <T> T withRetry(Supplier<T> call) {
+        int attempt = 0;
+        while (true) {
+            attempt++;
+            try {
+                return call.get();
+            } catch (RestClientResponseException e) {
+                if (e.getStatusCode().value() < 500) {
+                    throw e;
+                }
+                if (attempt >= maxAttempts) {
+                    throw e;
+                }
+                log.warn("Analytics service returned {} (attempt {} of {}); retrying",
+                        e.getStatusCode().value(), attempt, maxAttempts);
+            } catch (ResourceAccessException e) {
+                if (attempt >= maxAttempts) {
+                    throw e;
+                }
+                log.warn("Analytics service unreachable ({}/{}); retrying",
+                        attempt, maxAttempts);
+            }
+            sleepBackoff(attempt);
+        }
+    }
+
+    private void sleepBackoff(int attempt) {
+        long delay = Math.min(backoffMillis * (1L << (attempt - 1)), 10_000L);
+        try {
+            Thread.sleep(delay);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new AnalyticsServiceUnavailableException(
+                    "Analytics call interrupted while waiting to retry.");
+        }
     }
 
     public AnalyticsAnalysisResponse analyze(Path filePath, String filename) {
@@ -78,12 +134,12 @@ public class AnalyticsClient {
         });
 
         try {
-            AnalyticsAnalysisResponse response = restClient.post()
+            AnalyticsAnalysisResponse response = withRetry(() -> restClient.post()
                     .uri("/analyze")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(body)
                     .retrieve()
-                    .body(AnalyticsAnalysisResponse.class);
+                    .body(AnalyticsAnalysisResponse.class));
 
             if (response == null) {
                 throw new AnalysisFailedException("Analytics service returned an empty response");
@@ -131,12 +187,12 @@ public class AnalyticsClient {
     public AnalyticsTrendInsightsResponse trends(Path filePath, String filename) {
         MultiValueMap<String, Object> body = fileBody(filePath, filename);
         try {
-            AnalyticsTrendInsightsResponse response = restClient.post()
+            AnalyticsTrendInsightsResponse response = withRetry(() -> restClient.post()
                     .uri("/insights/trends")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(body)
                     .retrieve()
-                    .body(AnalyticsTrendInsightsResponse.class);
+                    .body(AnalyticsTrendInsightsResponse.class));
 
             if (response == null) {
                 throw new AnalysisFailedException(
@@ -160,12 +216,12 @@ public class AnalyticsClient {
     public AnalyticsAnomaliesResponse anomalies(Path filePath, String filename) {
         MultiValueMap<String, Object> body = fileBody(filePath, filename);
         try {
-            AnalyticsAnomaliesResponse response = restClient.post()
+            AnalyticsAnomaliesResponse response = withRetry(() -> restClient.post()
                     .uri("/insights/anomalies")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(body)
                     .retrieve()
-                    .body(AnalyticsAnomaliesResponse.class);
+                    .body(AnalyticsAnomaliesResponse.class));
 
             if (response == null) {
                 throw new AnalysisFailedException(
@@ -189,12 +245,12 @@ public class AnalyticsClient {
     public AnalyticsPerformersResponse performers(Path filePath, String filename) {
         MultiValueMap<String, Object> body = fileBody(filePath, filename);
         try {
-            AnalyticsPerformersResponse response = restClient.post()
+            AnalyticsPerformersResponse response = withRetry(() -> restClient.post()
                     .uri("/insights/top-bottom-performers")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(body)
                     .retrieve()
-                    .body(AnalyticsPerformersResponse.class);
+                    .body(AnalyticsPerformersResponse.class));
 
             if (response == null) {
                 throw new AnalysisFailedException(
@@ -221,7 +277,7 @@ public class AnalyticsClient {
             String customPreviousStart, String customPreviousEnd) {
         MultiValueMap<String, Object> body = fileBody(filePath, filename);
         try {
-            AnalyticsPeriodComparisonResponse response = restClient.post()
+            AnalyticsPeriodComparisonResponse response = withRetry(() -> restClient.post()
                     .uri(builder -> {
                         builder.path("/insights/period-comparison");
                         if (periodType != null && !periodType.isBlank()) {
@@ -244,7 +300,7 @@ public class AnalyticsClient {
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(body)
                     .retrieve()
-                    .body(AnalyticsPeriodComparisonResponse.class);
+                    .body(AnalyticsPeriodComparisonResponse.class));
 
             if (response == null) {
                 throw new AnalysisFailedException(
@@ -277,12 +333,12 @@ public class AnalyticsClient {
         addTextField(body, "analysisA", analysisJsonA);
         addTextField(body, "analysisB", analysisJsonB);
         try {
-            AnalyticsSiblingComparisonResponse response = restClient.post()
+            AnalyticsSiblingComparisonResponse response = withRetry(() -> restClient.post()
                     .uri("/insights/sibling-comparison")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(body)
                     .retrieve()
-                    .body(AnalyticsSiblingComparisonResponse.class);
+                    .body(AnalyticsSiblingComparisonResponse.class));
             if (response == null) {
                 throw new AnalysisFailedException(
                         "Analytics service returned an empty sibling comparison");
@@ -316,12 +372,12 @@ public class AnalyticsClient {
         addTextField(body, "analysisParent", analysisParentJson);
         addTextField(body, "analysisChild", analysisChildJson);
         try {
-            AnalyticsRelationalInsightResponse response = restClient.post()
+            AnalyticsRelationalInsightResponse response = withRetry(() -> restClient.post()
                     .uri("/insights/relational")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(body)
                     .retrieve()
-                    .body(AnalyticsRelationalInsightResponse.class);
+                    .body(AnalyticsRelationalInsightResponse.class));
             if (response == null) {
                 throw new AnalysisFailedException(
                         "Analytics service returned an empty relational insight");
@@ -363,12 +419,12 @@ public class AnalyticsClient {
         tables.forEach((sanitized, path) -> body.add("files",
                 namedFile(path, sanitizedToOriginalFilename.get(sanitized))));
         try {
-            QueryResultResponse response = restClient.post()
+            QueryResultResponse response = withRetry(() -> restClient.post()
                     .uri("/query/execute")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(body)
                     .retrieve()
-                    .body(QueryResultResponse.class);
+                    .body(QueryResultResponse.class));
             if (response == null) {
                 return new QueryResultResponse(false, null, null, null,
                         "Analytics service returned an empty response.");
@@ -394,12 +450,12 @@ public class AnalyticsClient {
 
     public List<AnalyticsCleaningSuggestion> cleaningSuggestions(Path filePath, String filename) {        MultiValueMap<String, Object> body = fileBody(filePath, filename);
         try {
-            AnalyticsCleaningSuggestionsResponse response = restClient.post()
+            AnalyticsCleaningSuggestionsResponse response = withRetry(() -> restClient.post()
                     .uri("/clean/suggestions")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(body)
                     .retrieve()
-                    .body(AnalyticsCleaningSuggestionsResponse.class);
+                    .body(AnalyticsCleaningSuggestionsResponse.class));
 
             return response == null || response.suggestions() == null
                     ? List.of()
@@ -422,7 +478,7 @@ public class AnalyticsClient {
         body.add("actions", new HttpEntity<>(toJson(actions), jsonHeaders));
 
         try {
-            return restClient.post()
+            return withRetry(() -> restClient.post()
                     .uri("/clean/apply")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(body)
@@ -441,7 +497,7 @@ public class AnalyticsClient {
                                 response.getHeaders().getFirst("X-Cleaning-Summary");
                         AnalyticsCleaningSummary summary = parseSummary(rawSummary);
                         return new CleaningApplyResult(bytes, summary);
-                    });
+                    }));
         } catch (ResourceAccessException e) {
             throw new AnalyticsServiceUnavailableException(
                     "Analytics service is unavailable. Please try again later.");

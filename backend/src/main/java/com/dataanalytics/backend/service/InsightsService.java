@@ -15,10 +15,13 @@ import com.dataanalytics.backend.model.DatasetInsightSnapshot;
 import com.dataanalytics.backend.model.DatasetRelationship;
 import com.dataanalytics.backend.repository.AnalysisResultRepository;
 import com.dataanalytics.backend.repository.DatasetInsightSnapshotRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import tools.jackson.databind.ObjectMapper;
 
 import java.nio.file.Path;
@@ -47,32 +50,39 @@ public class InsightsService {
     private final AnalyticsClient analyticsClient;
     private final RelationshipService relationshipService;
     private final ObjectMapper objectMapper;
+    private final PlatformTransactionManager transactionManager;
+    private TransactionTemplate transactionTemplate;
+    private TransactionTemplate readOnlyTransactionTemplate;
 
-    @Transactional
+    @PostConstruct
+    void createTransactionTemplates() {
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+        this.readOnlyTransactionTemplate = new TransactionTemplate(transactionManager);
+        this.readOnlyTransactionTemplate.setReadOnly(true);
+    }
+
     public AnalyticsTrendInsightsResponse getTrends(
             String ownerEmail, Long projectId, Long datasetId, boolean forceRefresh) {
-        Dataset dataset = datasetWithAnalysis(ownerEmail, projectId, datasetId);
-        return cached(dataset, DatasetInsightSnapshot.InsightType.TREND, forceRefresh,
+        DatasetContext ctx = datasetContextWithAnalysis(ownerEmail, projectId, datasetId);
+        return cached(ctx, DatasetInsightSnapshot.InsightType.TREND, forceRefresh,
                 AnalyticsTrendInsightsResponse.class,
-                () -> analyticsClient.trends(fileOf(dataset), dataset.getOriginalFilename()));
+                () -> analyticsClient.trends(fileOf(ctx.dataset()), ctx.filename()));
     }
 
-    @Transactional
     public AnalyticsPerformersResponse getPerformers(
             String ownerEmail, Long projectId, Long datasetId, boolean forceRefresh) {
-        Dataset dataset = datasetWithAnalysis(ownerEmail, projectId, datasetId);
-        return cached(dataset, DatasetInsightSnapshot.InsightType.TOP_BOTTOM_PERFORMERS,
+        DatasetContext ctx = datasetContextWithAnalysis(ownerEmail, projectId, datasetId);
+        return cached(ctx, DatasetInsightSnapshot.InsightType.TOP_BOTTOM_PERFORMERS,
                 forceRefresh, AnalyticsPerformersResponse.class,
-                () -> analyticsClient.performers(fileOf(dataset), dataset.getOriginalFilename()));
+                () -> analyticsClient.performers(fileOf(ctx.dataset()), ctx.filename()));
     }
 
-    @Transactional
     public AnalyticsAnomaliesResponse getAnomalies(
             String ownerEmail, Long projectId, Long datasetId, boolean forceRefresh) {
-        Dataset dataset = datasetWithAnalysis(ownerEmail, projectId, datasetId);
-        return cached(dataset, DatasetInsightSnapshot.InsightType.ANOMALY, forceRefresh,
+        DatasetContext ctx = datasetContextWithAnalysis(ownerEmail, projectId, datasetId);
+        return cached(ctx, DatasetInsightSnapshot.InsightType.ANOMALY, forceRefresh,
                 AnalyticsAnomaliesResponse.class,
-                () -> analyticsClient.anomalies(fileOf(dataset), dataset.getOriginalFilename()));
+                () -> analyticsClient.anomalies(fileOf(ctx.dataset()), ctx.filename()));
     }
 
     /**
@@ -81,13 +91,12 @@ public class InsightsService {
      * any parameterised call always computes fresh so users never see one
      * range's numbers served for another's.
      */
-    @Transactional
     public AnalyticsPeriodComparisonResponse getPeriodComparison(
             String ownerEmail, Long projectId, Long datasetId,
             String periodType, String customCurrentStart, String customCurrentEnd,
             String customPreviousStart, String customPreviousEnd,
             boolean forceRefresh) {
-        Dataset dataset = datasetWithAnalysis(ownerEmail, projectId, datasetId);
+        DatasetContext ctx = datasetContextWithAnalysis(ownerEmail, projectId, datasetId);
 
         validatePeriodParams(periodType,
                 customCurrentStart, customCurrentEnd, customPreviousStart, customPreviousEnd);
@@ -97,14 +106,14 @@ public class InsightsService {
                 && !isPresent(customPreviousStart) && !isPresent(customPreviousEnd);
         if (!cacheable) {
             return analyticsClient.periodComparison(
-                    fileOf(dataset), dataset.getOriginalFilename(),
+                    fileOf(ctx.dataset()), ctx.filename(),
                     periodType, customCurrentStart, customCurrentEnd,
                     customPreviousStart, customPreviousEnd);
         }
-        return cached(dataset, DatasetInsightSnapshot.InsightType.PERIOD_COMPARISON,
+        return cached(ctx, DatasetInsightSnapshot.InsightType.PERIOD_COMPARISON,
                 forceRefresh, AnalyticsPeriodComparisonResponse.class,
                 () -> analyticsClient.periodComparison(
-                        fileOf(dataset), dataset.getOriginalFilename(),
+                        fileOf(ctx.dataset()), ctx.filename(),
                         null, null, null, null, null));
     }
 
@@ -118,15 +127,33 @@ public class InsightsService {
         snapshotRepository.deleteByDataset_Id(datasetId);
     }
 
-    /** Loads the dataset after ownership + analysis checks (shared preamble). */
-    private Dataset datasetWithAnalysis(String ownerEmail, Long projectId, Long datasetId) {
-        projectService.findOwnedProject(ownerEmail, projectId);
-        Dataset dataset = datasetService.findDatasetInProject(projectId, datasetId);
-        // Semantic roles come from the stored analysis; without them we cannot
-        // compute or interpret insights for this dataset.
-        analysisResultRepository.findByDatasetId(dataset.getId())
-                .orElseThrow(() -> new DashboardRequiresAnalysisException(datasetId));
-        return dataset;
+    /** Simple fields of the owned, analysed dataset needed beyond one tx. */
+    private record DatasetContext(Dataset dataset) {
+        Long id() {
+            return dataset.getId();
+        }
+
+        String filename() {
+            return dataset.getOriginalFilename();
+        }
+    }
+
+    /**
+     * Loads the dataset after ownership + analysis checks (shared preamble).
+     * All lazy associations are resolved inside one read-only transaction, so
+     * the returned context can be used safely once the transaction is over.
+     */
+    private DatasetContext datasetContextWithAnalysis(
+            String ownerEmail, Long projectId, Long datasetId) {
+        return readOnlyTransactionTemplate.execute(status -> {
+            projectService.findOwnedProject(ownerEmail, projectId);
+            Dataset dataset = datasetService.findDatasetInProject(projectId, datasetId);
+            // Semantic roles come from the stored analysis; without them we cannot
+            // compute or interpret insights for this dataset.
+            analysisResultRepository.findByDatasetId(dataset.getId())
+                    .orElseThrow(() -> new DashboardRequiresAnalysisException(datasetId));
+            return new DatasetContext(dataset);
+        });
     }
 
     /**
@@ -135,33 +162,37 @@ public class InsightsService {
      * Freshness is structural — invalidation deletes rows on data changes, so
      * any surviving row was computed from the current data.
      */
-    private <T> T cached(Dataset dataset, DatasetInsightSnapshot.InsightType type,
+    private <T> T cached(DatasetContext ctx, DatasetInsightSnapshot.InsightType type,
             boolean forceRefresh, Class<T> responseType, Supplier<T> computer) {
         if (!forceRefresh) {
-            var existing =
-                    snapshotRepository.findByDataset_IdAndInsightType(dataset.getId(), type);
+            var existing = snapshotRepository.findByDataset_IdAndInsightType(ctx.id(), type);
             if (existing.isPresent()) {
                 try {
                     return objectMapper.readValue(existing.get().getResultJson(), responseType);
                 } catch (Exception e) {
                     log.warn("Stored {} snapshot for dataset {} unreadable, recomputing",
-                            type, dataset.getId(), e);
+                            type, ctx.id(), e);
                 }
             }
         }
+        // The computation is a (potentially slow) analytics HTTP round-trip —
+        // it runs OUTSIDE any transaction so no DB connection is held while it
+        // is in flight. Only the snapshot upsert below opens a short one.
         T result = computer.get();
         try {
-            DatasetInsightSnapshot snapshot = snapshotRepository
-                    .findByDataset_IdAndInsightType(dataset.getId(), type)
-                    .orElseGet(() -> DatasetInsightSnapshot.builder()
-                            .dataset(dataset)
-                            .insightType(type)
-                            .build());
-            snapshot.setResultJson(objectMapper.writeValueAsString(result));
-            snapshot.setComputedAt(LocalDateTime.now());
-            snapshotRepository.save(snapshot);
+            transactionTemplate.executeWithoutResult(status -> {
+                DatasetInsightSnapshot snapshot = snapshotRepository
+                        .findByDataset_IdAndInsightType(ctx.id(), type)
+                        .orElseGet(() -> DatasetInsightSnapshot.builder()
+                                .dataset(ctx.dataset())
+                                .insightType(type)
+                                .build());
+                snapshot.setResultJson(objectMapper.writeValueAsString(result));
+                snapshot.setComputedAt(LocalDateTime.now());
+                snapshotRepository.save(snapshot);
+            });
         } catch (Exception e) {
-            log.warn("Could not persist {} snapshot for dataset {}", type, dataset.getId(), e);
+            log.warn("Could not persist {} snapshot for dataset {}", type, ctx.id(), e);
         }
         return result;
     }
@@ -169,31 +200,51 @@ public class InsightsService {
     private static final java.util.Set<String> VALID_PERIOD_TYPES =
             java.util.Set.of("day", "week", "month", "quarter");
 
+    /** Everything the sibling-comparison HTTP call needs, captured in one tx. */
+    private record SiblingComparisonInputs(
+            Path fileA, String filenameA, String labelA,
+            Path fileB, String filenameB, String labelB,
+            String analysisJsonA, String analysisJsonB) {
+    }
+
     /**
      * Sibling comparison between two datasets of the project. Deliberately
      * does NOT require a detected SIBLING relationship — the endpoint is
      * usable for ad-hoc comparisons of any two analysed datasets; the UI only
      * surfaces it for confirmed siblings.
      */
-    @Transactional(readOnly = true)
     public AnalyticsSiblingComparisonResponse getSiblingComparison(
             String ownerEmail, Long projectId, Long datasetAId, Long datasetBId) {
-        projectService.findOwnedProject(ownerEmail, projectId);
-        Dataset datasetA = datasetService.findDatasetInProject(projectId, datasetAId);
-        Dataset datasetB = datasetService.findDatasetInProject(projectId, datasetBId);
-        if (datasetA.getId().equals(datasetB.getId())) {
-            throw new InvalidFileException("Pick two different datasets to compare.");
-        }
+        // Lazy associations and file resolution happen inside one read-only
+        // transaction; the analytics HTTP call itself runs outside it.
+        SiblingComparisonInputs inputs = readOnlyTransactionTemplate.execute(status -> {
+            projectService.findOwnedProject(ownerEmail, projectId);
+            Dataset datasetA = datasetService.findDatasetInProject(projectId, datasetAId);
+            Dataset datasetB = datasetService.findDatasetInProject(projectId, datasetBId);
+            if (datasetA.getId().equals(datasetB.getId())) {
+                throw new InvalidFileException("Pick two different datasets to compare.");
+            }
 
-        AnalysisResult analysisA = requireAnalysis(datasetA);
-        AnalysisResult analysisB = requireAnalysis(datasetB);
+            AnalysisResult analysisA = requireAnalysis(datasetA);
+            AnalysisResult analysisB = requireAnalysis(datasetB);
 
-        Path fileA = fileStorageService.resolveExisting(datasetA.getStoredFilePath());
-        Path fileB = fileStorageService.resolveExisting(datasetB.getStoredFilePath());
+            return new SiblingComparisonInputs(
+                    fileOf(datasetA), datasetA.getOriginalFilename(), labelOf(datasetA),
+                    fileOf(datasetB), datasetB.getOriginalFilename(), labelOf(datasetB),
+                    partialAnalysisJson(analysisA), partialAnalysisJson(analysisB));
+        });
         return analyticsClient.siblingComparison(
-                fileA, datasetA.getOriginalFilename(), labelOf(datasetA),
-                fileB, datasetB.getOriginalFilename(), labelOf(datasetB),
-                partialAnalysisJson(analysisA), partialAnalysisJson(analysisB));
+                inputs.fileA(), inputs.filenameA(), inputs.labelA(),
+                inputs.fileB(), inputs.filenameB(), inputs.labelB(),
+                inputs.analysisJsonA(), inputs.analysisJsonB());
+    }
+
+    /** Everything the relational-insights HTTP call needs, captured in one tx. */
+    private record RelationalInsightInputs(
+            Path parentFile, String parentFilename,
+            Path childFile, String childFilename,
+            String parentColumn, String childColumn,
+            String matchPercentage, String analysisParentJson, String analysisChildJson) {
     }
 
     /**
@@ -201,37 +252,48 @@ public class InsightsService {
      * one CONFIRMED FOREIGN_KEY relationship. SUGGESTED relationships must be
      * confirmed first; SIBLING links use the sibling-comparison endpoint.
      */
-    @Transactional(readOnly = true)
     public AnalyticsRelationalInsightResponse getRelationalInsights(
             String ownerEmail, Long projectId, Long relationshipId) {
-        DatasetRelationship relationship =
-                relationshipService.findOwnedRelationship(ownerEmail, projectId, relationshipId);
-        if (relationship.getRelationshipType() != DatasetRelationship.RelationshipType.FOREIGN_KEY) {
-            throw new InvalidRelationshipException(
-                    "Relational insights are only available for foreign-key relationships. "
-                            + "This link is a sibling relationship — use the sibling comparison instead.");
-        }
-        if (relationship.getStatus() != DatasetRelationship.RelationshipStatus.CONFIRMED) {
-            throw new InvalidRelationshipException(
-                    "Confirm this relationship first — relational insights are only "
-                            + "computed for confirmed foreign-key links.");
-        }
+        // The relationship's and datasets' lazy associations are resolved
+        // inside one read-only transaction; the analytics HTTP call runs
+        // outside it.
+        RelationalInsightInputs inputs = readOnlyTransactionTemplate.execute(status -> {
+            DatasetRelationship relationship =
+                    relationshipService.findOwnedRelationship(ownerEmail, projectId, relationshipId);
+            if (relationship.getRelationshipType()
+                    != DatasetRelationship.RelationshipType.FOREIGN_KEY) {
+                throw new InvalidRelationshipException(
+                        "Relational insights are only available for foreign-key relationships. "
+                                + "This link is a sibling relationship — use the sibling comparison instead.");
+            }
+            if (relationship.getStatus() != DatasetRelationship.RelationshipStatus.CONFIRMED) {
+                throw new InvalidRelationshipException(
+                        "Confirm this relationship first — relational insights are only "
+                                + "computed for confirmed foreign-key links.");
+            }
 
-        // Detected FK rows store child -> parent: datasetA repeats values that
-        // datasetB holds uniquely.
-        Dataset parent = relationship.getDatasetB();
-        Dataset child = relationship.getDatasetA();
-        AnalysisResult analysisParent = requireAnalysis(parent);
-        AnalysisResult analysisChild = requireAnalysis(child);
+            // Detected FK rows store child -> parent: datasetA repeats values
+            // that datasetB holds uniquely.
+            Dataset parent = relationship.getDatasetB();
+            Dataset child = relationship.getDatasetA();
+            AnalysisResult analysisParent = requireAnalysis(parent);
+            AnalysisResult analysisChild = requireAnalysis(child);
 
-        String matchPercentage = relationship.getMatchPercentage() == null
-                ? null : String.valueOf(relationship.getMatchPercentage());
+            String matchPercentage = relationship.getMatchPercentage() == null
+                    ? null : String.valueOf(relationship.getMatchPercentage());
+            return new RelationalInsightInputs(
+                    fileOf(parent), parent.getOriginalFilename(),
+                    fileOf(child), child.getOriginalFilename(),
+                    relationship.getSharedColumnB(), relationship.getSharedColumnA(),
+                    matchPercentage,
+                    partialAnalysisJson(analysisParent), partialAnalysisJson(analysisChild));
+        });
         return analyticsClient.relationalInsights(
-                fileOf(parent), parent.getOriginalFilename(),
-                fileOf(child), child.getOriginalFilename(),
-                relationship.getSharedColumnB(), relationship.getSharedColumnA(),
-                matchPercentage,
-                partialAnalysisJson(analysisParent), partialAnalysisJson(analysisChild));
+                inputs.parentFile(), inputs.parentFilename(),
+                inputs.childFile(), inputs.childFilename(),
+                inputs.parentColumn(), inputs.childColumn(),
+                inputs.matchPercentage(),
+                inputs.analysisParentJson(), inputs.analysisChildJson());
     }
 
     private AnalysisResult requireAnalysis(Dataset dataset) {

@@ -15,6 +15,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -50,10 +54,13 @@ public class DatasetController {
     }
 
     @GetMapping
-    public ResponseEntity<List<DatasetResponse>> list(
+    public ResponseEntity<Page<DatasetResponse>> list(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable Long projectId) {
-        return ResponseEntity.ok(datasetService.listDatasets(userDetails.getUsername(), projectId));
+            @PathVariable Long projectId,
+            @PageableDefault(size = 50, sort = "uploadedAt", direction = Sort.Direction.DESC)
+            Pageable pageable) {
+        return ResponseEntity.ok(
+                datasetService.listDatasets(userDetails.getUsername(), projectId, pageable));
     }
 
     @GetMapping("/{datasetId}")

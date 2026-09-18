@@ -10,10 +10,15 @@ import com.dataanalytics.backend.model.Project;
 import com.dataanalytics.backend.repository.ChatConversationRepository;
 import com.dataanalytics.backend.repository.ChatMessageRepository;
 import com.dataanalytics.backend.repository.DatasetRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -116,15 +121,21 @@ public class ChatService {
     private final FileStorageService fileStorageService;
     private final AnalyticsClient analyticsClient;
     private final ObjectMapper objectMapper;
+    private final PlatformTransactionManager transactionManager;
+    private TransactionTemplate transactionTemplate;
+
+    @PostConstruct
+    void createTransactionTemplate() {
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+    }
 
     @Transactional(readOnly = true)
-    public List<ChatDtos.ChatMessageResponse> history(Project project) {
+    public Page<ChatDtos.ChatMessageResponse> history(Project project, Pageable pageable) {
         return conversationRepository.findByProjectId(project.getId())
                 .map(conversation -> messageRepository
-                        .findByConversationIdOrderByCreatedAtAscIdAsc(conversation.getId()).stream()
-                        .map(ChatService::toResponse)
-                        .toList())
-                .orElse(List.of());
+                        .findByConversationId(conversation.getId(), pageable)
+                        .map(ChatService::toResponse))
+                .orElse(Page.empty(pageable));
     }
 
     @Transactional
@@ -136,12 +147,19 @@ public class ChatService {
                 });
     }
 
-    @Transactional
     public ChatDtos.ChatMessageResponse ask(Project project, String userText) {
-        ChatConversation conversation = getOrCreateConversation(project);
+        // Resolve the conversation (if one already exists) BEFORE the model
+        // round-trip. A brand-new conversation is only created together with
+        // the messages at the END of a successful answer, so a failed request
+        // leaves no trace — the same guarantee the old single-transaction
+        // method provided.
+        ChatConversation existing = conversationRepository
+                .findByProjectId(project.getId()).orElse(null);
+        Long conversationId = existing == null ? null : existing.getId();
 
-        List<ChatMessage> recent = new ArrayList<>(messageRepository
-                .findTop6ByConversationIdOrderByCreatedAtDescIdAsc(conversation.getId()));
+        List<ChatMessage> recent = conversationId == null ? List.of() : new ArrayList<>(
+                messageRepository.findTop6ByConversationIdOrderByCreatedAtDescIdAsc(
+                        conversationId));
         Collections.reverse(recent);
 
         String context = contextCache.get(project.getId(),
@@ -186,11 +204,24 @@ public class ChatService {
             usedSql = roundTrip.usedSql();
         }
 
-        persist(conversation, ChatMessage.ChatRole.USER, userText);
-        ChatMessage assistantMessage = persist(
-                conversation, ChatMessage.ChatRole.ASSISTANT, reply, usedSql);
+        // Both messages are persisted in ONE short transaction so the user's
+        // question and the assistant's answer always commit together. It runs
+        // after every HTTP call, keeping the connection busy only for the two
+        // inserts.
+        String finalReply = reply;
+        String finalUsedSql = usedSql;
+        ChatMessage assistantMessage = transactionTemplate.execute(status -> {
+            ChatConversation conversation = conversationId == null
+                    ? conversationRepository.save(
+                            ChatConversation.builder().project(project).build())
+                    : conversationRepository.findById(conversationId)
+                            .orElseThrow(() -> new IllegalStateException(
+                                    "Conversation disappeared during chat"));
+            persist(conversation, ChatMessage.ChatRole.USER, userText);
+            return persist(conversation, ChatMessage.ChatRole.ASSISTANT, finalReply, finalUsedSql);
+        });
         log.debug("Chat answered for project {}: {} -> {} chars (query={})",
-                project.getId(), userText.length(), reply.length(), usedSql != null);
+                project.getId(), userText.length(), finalReply.length(), finalUsedSql != null);
         return toResponse(assistantMessage);
     }
 
@@ -447,12 +478,6 @@ public class ChatService {
             }
         }
         return null;
-    }
-
-    private ChatConversation getOrCreateConversation(Project project) {
-        return conversationRepository.findByProjectId(project.getId())
-                .orElseGet(() -> conversationRepository.save(
-                        ChatConversation.builder().project(project).build()));
     }
 
     private ChatMessage persist(ChatConversation conversation, ChatMessage.ChatRole role,

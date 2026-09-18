@@ -1,6 +1,6 @@
 import { HttpClient, HttpEvent } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AnalysisResult } from '../models/analysis.model';
 import {
@@ -11,6 +11,7 @@ import {
 } from '../models/cleaning.model';
 import { ChartDataResponse, DashboardResponse } from '../models/dashboard.model';
 import { CsvPreview, Dataset } from '../models/dataset.model';
+import { Page } from '../models/page.model';
 
 @Injectable({ providedIn: 'root' })
 export class DatasetService {
@@ -25,8 +26,8 @@ export class DatasetService {
 
   getDatasets(projectId: number): Observable<Dataset[]> {
     return this.http
-      .get<Dataset[]>(this.apiUrl(projectId))
-      .pipe(tap((datasets) => this.datasetsSignal.set(datasets)));
+      .get<Page<Dataset>>(this.apiUrl(projectId))
+      .pipe(map((page) => page.content), tap((datasets) => this.datasetsSignal.set(datasets)));
   }
 
   getDataset(projectId: number, datasetId: number): Observable<Dataset> {

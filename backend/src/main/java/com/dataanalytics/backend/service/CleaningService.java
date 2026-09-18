@@ -40,7 +40,6 @@ public class CleaningService {
     private final ProjectContextCache projectContextCache;
     private final InsightsService insightsService;
 
-    @Transactional(readOnly = true)
     public List<AnalyticsCleaningSuggestion> getSuggestions(
             String ownerEmail, Long projectId, Long datasetId) {
         projectService.findOwnedProject(ownerEmail, projectId);
@@ -60,7 +59,7 @@ public class CleaningService {
             Long projectId,
             Long datasetId,
             List<SelectedCleaningAction> actions) {
-        projectService.findOwnedProject(ownerEmail, projectId);
+        Project project = projectService.findOwnedProject(ownerEmail, projectId);
         Dataset source = datasetService.findDatasetInProject(projectId, datasetId);
         Path storedFile = fileStorageService.resolveExisting(source.getStoredFilePath());
 
@@ -74,7 +73,7 @@ public class CleaningService {
             AnalyticsClient.CleaningApplyResult result =
                     analyticsClient.applyCleaning(storedFile, source.getOriginalFilename(), actions);
 
-            Dataset cleaned = createCleanedDataset(projectId, source, result.csvBytes());
+            Dataset cleaned = createCleanedDataset(project, source, result.csvBytes());
             cleaned = datasetRepository.save(cleaned);
 
             // Analyze immediately so the cleaned dataset opens with full stats.
@@ -109,16 +108,14 @@ public class CleaningService {
     }
 
     private Dataset createCleanedDataset(
-            Long projectId, Dataset source, byte[] cleanedCsvBytes) {
-        Project project = source.getProject();
-
+            Project project, Dataset source, byte[] cleanedCsvBytes) {
         String baseName = source.getName();
         String name = baseName.endsWith(" (cleaned)")
                 ? baseName + " " + System.currentTimeMillis()
                 : baseName + " (cleaned)";
 
         String storedPath = fileStorageService.storeBytes(
-                projectId, source.getOriginalFilename(), cleanedCsvBytes);
+                project.getId(), source.getOriginalFilename(), cleanedCsvBytes);
 
         return Dataset.builder()
                 .name(name)

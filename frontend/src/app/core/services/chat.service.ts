@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { ChatMessage } from '../models/chat.model';
+import { Page } from '../models/page.model';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -16,11 +17,13 @@ export class ChatService {
   loadHistory(projectId: number): void {
     this.loadingHistory.set(true);
     this.error.set('');
-    this.http.get<ChatMessage[]>(
+    // The backend serves page 0 newest-first; flip it so the chat renders
+    // oldest at the top.
+    this.http.get<Page<ChatMessage>>(
       `${environment.apiUrl}/projects/${projectId}/chat/history`,
     ).subscribe({
-      next: (messages) => {
-        this.messages.set(messages);
+      next: (page) => {
+        this.messages.set(page.content.slice().reverse());
         this.loadingHistory.set(false);
       },
       error: () => {

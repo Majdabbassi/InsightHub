@@ -569,7 +569,7 @@ def _classify_role(
             reasoning += "; column name also matches an ID pattern"
         return SemanticRole.IDENTIFIER, round(confidence, 2), reasoning + "."
 
-    if name_suggests_id:
+    if name_suggests_id and unique_ratio > CATEGORICAL_CARDINALITY_RATIO:
         return (
             SemanticRole.IDENTIFIER,
             0.7,

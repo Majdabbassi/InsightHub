@@ -15,6 +15,8 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -61,11 +63,9 @@ public class DatasetService {
     }
 
     @Transactional(readOnly = true)
-    public List<DatasetResponse> listDatasets(String ownerEmail, Long projectId) {
+    public Page<DatasetResponse> listDatasets(String ownerEmail, Long projectId, Pageable pageable) {
         projectService.findOwnedProject(ownerEmail, projectId);
-        return datasetRepository.findByProjectId(projectId).stream()
-                .map(DatasetResponse::from)
-                .toList();
+        return datasetRepository.findByProjectId(projectId, pageable).map(DatasetResponse::from);
     }
 
     @Transactional(readOnly = true)
@@ -134,8 +134,11 @@ public class DatasetService {
 
     /**
      * Loads a dataset after verifying the owning project chain. Shared with
-     * AnalysisService for chained ownership checks.
+     * AnalysisService for chained ownership checks. Read-only because it
+     * touches the lazy {@code project} association; the returned entity
+     * becomes detached once the method returns.
      */
+    @Transactional(readOnly = true)
     public Dataset findDatasetInProject(Long projectId, Long datasetId) {
         Dataset dataset = datasetRepository.findById(datasetId)
                 .orElseThrow(() -> new DatasetNotFoundException(datasetId));

@@ -11,7 +11,6 @@ import com.dataanalytics.backend.model.Dataset;
 import com.dataanalytics.backend.repository.AnalysisResultRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -27,7 +26,9 @@ public class DashboardService {
     private final ChartSuggestionService chartSuggestionService;
     private final ChartDataService chartDataService;
 
-    @Transactional(readOnly = true)
+    // Each repository call below runs in its own short transaction; the
+    // (potentially slow) CSV read + aggregation happen outside any transaction
+    // so no database connection is held during file I/O.
     public DashboardResponse getDashboard(String ownerEmail, Long projectId, Long datasetId) {
         projectService.findOwnedProject(ownerEmail, projectId);
         Dataset dataset = datasetService.findDatasetInProject(projectId, datasetId);
@@ -55,7 +56,6 @@ public class DashboardService {
         return new DashboardResponse(kpis, charts);
     }
 
-    @Transactional(readOnly = true)
     public ChartDataResponse getChartData(
             String ownerEmail, Long projectId, Long datasetId,
             String xColumn, String yColumn, String type, String aggregation) {

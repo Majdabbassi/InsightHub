@@ -1,5 +1,12 @@
 # InsightHub — AI-Powered Data Analytics Platform
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![CI](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF.svg)](.github/workflows/ci.yml)
+[![Angular](https://img.shields.io/badge/Angular-21-DD0031.svg)](frontend)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1-6DB33F.svg)](backend)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Python%203.12-009688.svg)](analytics-service)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED.svg)](docker-compose.yml)
+
 Upload a CSV, and the platform figures out what's actually in it: what each column *means* (not just its type), where the outliers and correlations are, how clean the data is, and what's trending — then lets you ask an AI assistant about it in plain English.
 
 Built as an end-to-end learning project spanning a full analytics pipeline: ingestion → semantic analysis → cleaning → dashboards → cross-dataset insights → AI assistant.
@@ -54,7 +61,7 @@ Most portfolio "data analytics" projects stop at showing you column types and a 
 
 ## Architecture
 
-```
+```text
 Angular (nginx) ──/api──> Spring Boot ──> MySQL
                               │
                               ├──> FastAPI/Pandas analytics-service (analysis, cleaning, insights)
@@ -74,6 +81,7 @@ docker compose up -d --build
 ```
 
 First run only — pull the model into the Ollama container:
+
 ```bash
 docker exec -it data-ollama ollama pull llama3.2:3b
 ```
@@ -99,12 +107,14 @@ CPU-friendly.
 |---|---|---|
 | Frontend | http://localhost:4200 | Main app |
 | Backend API | http://localhost:8080/api | Spring Boot REST API |
+| Swagger UI | http://localhost:8080/swagger-ui.html | Interactive OpenAPI docs (springdoc) |
 | Analytics service | http://localhost:8000 | FastAPI (internal, also reachable directly) |
 | phpMyAdmin | http://localhost:8081 | DB inspection (optional, start with `--profile tools`) |
 | Ollama | http://localhost:11434 | LLM (internal, host-mapped for convenience) |
 
 phpMyAdmin is excluded from the default Compose profile to keep startup
 light. Start it with the rest:
+
 ```bash
 docker compose --profile tools up -d
 ```
@@ -124,17 +134,29 @@ docker compose --profile tools up -d
 | `OLLAMA_BASE_URL` | Ollama endpoint | `http://ollama:11434` |
 | `OLLAMA_MODEL` | Model to use (see the pull note above) | `llama3.2:3b` |
 | `OLLAMA_TIMEOUT_SECONDS` | Read timeout (cold model load is slow) | `180` |
+| `ANALYTICS_RETRY_MAX_ATTEMPTS` | Retries for transient analytics-service failures (connection / 5xx; 4xx are never retried) | `3` |
+| `ANALYTICS_RETRY_BACKOFF_MILLIS` | Initial exponential backoff between retries (doubles, capped at 10s) | `500` |
 
 ## What's under the hood, if you want to dig in
 
 - `analytics-service/` — the actual "brains": semantic classification, outlier/correlation detection, quality scoring, cleaning engine, insights (trends + period comparison). Pandas-only, no ML libraries — the classification and scoring are rule-based and hand-tuned against stress-tested ground-truth data.
-- `backend/` — auth (JWT), project/dataset ownership model, orchestrates calls to the analytics-service, persists results, relationship detection/CRUD, chat proxy to Ollama.
+- `backend/` — auth (JWT), project/dataset ownership model, Flyway-managed schema with the Hibernate `open-in-view` flag off, orchestrates calls to the analytics-service over a retry-able client (exponential backoff on transient failures), persists results, paginated list APIs, relationship detection/CRUD, chat proxy to Ollama, and springdoc OpenAPI docs.
 - `frontend/` — Angular signals-based state throughout, custom SVG relationship diagram (no charting library for that one — draggable nodes, edge styling by relationship type), Chart.js for dashboards.
 
 ## Test suite
 
 The core math and a few end-to-end paths are covered by real tests, and they
-run without any external services:
+run without any external services. The same three suites run in CI via
+GitHub Actions (`.github/workflows/ci.yml`) with coverage reports attached:
+
+| Suite | Command | Coverage |
+|---|---|---|
+| Analytics (pytest) | `cd analytics-service && python -m pytest` | line coverage via `pytest-cov` (LCOV) |
+| Backend (Spring Boot) | `cd backend && ./mvnw test` | instruction/line coverage via JaCoCo |
+| Frontend (Vitest) | `cd frontend && ng test --watch=false --coverage` | report via `@vitest/coverage-v8` |
+
+To see the numbers locally, run the suite and open its report: `coverage.lcov`
+(analytics), `target/site/jacoco/` (backend), `coverage/frontend/` (frontend).
 
 - `analytics-service/tests/` — pytest suite over the analytics math core:
   semantic column classification, IQR outlier detection, data-quality scoring,
@@ -143,8 +165,11 @@ run without any external services:
   packages installed).
 - `backend/src/test/java/...` — Spring Boot tests (`mvnw test`) against an
   in-memory H2 (MySQL compatibility mode) via the `test` profile, so they pass
-  without a live MySQL. Covers auth register/login flow (MockMvc) and
-  analysis-result persistence/one-to-one uniqueness in JPA.
+  without a live MySQL. Covers the auth register/login flow (MockMvc, JWT),
+  analysis-result persistence/one-to-one uniqueness in JPA, paginated list
+  responses over HTTP, OpenAPI docs availability, plus pure unit tests for the
+  chat prompt parser, UTF-8 BOM-safe CSV reading, chart aggregation/date
+  rollups, and SQL-safe table-name sanitizing.
 - `frontend/src/app/**/*.spec.ts` — Vitest smoke tests (`ng test`) for the
   auth guard redirect and the login form.
 

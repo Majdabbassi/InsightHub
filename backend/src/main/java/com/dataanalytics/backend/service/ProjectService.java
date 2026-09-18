@@ -10,11 +10,11 @@ import com.dataanalytics.backend.model.User;
 import com.dataanalytics.backend.repository.ProjectRepository;
 import com.dataanalytics.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -37,11 +37,9 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProjectResponse> listProjects(String ownerEmail) {
+    public Page<ProjectResponse> listProjects(String ownerEmail, Pageable pageable) {
         User owner = getUserByEmail(ownerEmail);
-        return projectRepository.findByOwnerId(owner.getId()).stream()
-                .map(ProjectResponse::from)
-                .toList();
+        return projectRepository.findByOwnerId(owner.getId(), pageable).map(ProjectResponse::from);
     }
 
     @Transactional(readOnly = true)
@@ -65,8 +63,11 @@ public class ProjectService {
 
     /**
      * Loads the project and verifies it exists and belongs to the given user.
-     * Shared with DatasetService for chained ownership checks.
+     * Shared with DatasetService for chained ownership checks. Read-only
+     * because it touches the lazy {@code owner} association; the returned
+     * entity becomes detached once the method returns.
      */
+    @Transactional(readOnly = true)
     public Project findOwnedProject(String ownerEmail, Long projectId) {
         User user = getUserByEmail(ownerEmail);
 

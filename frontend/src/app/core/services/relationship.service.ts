@@ -1,12 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   CreateRelationshipRequest,
   DatasetRelationship,
   RelationshipScanResponse,
 } from '../models/relationship.model';
+import { Page } from '../models/page.model';
 
 @Injectable({ providedIn: 'root' })
 export class RelationshipService {
@@ -18,8 +19,9 @@ export class RelationshipService {
 
   getRelationships(projectId: number): Observable<DatasetRelationship[]> {
     return this.http
-      .get<DatasetRelationship[]>(`${this.apiUrl}/${projectId}/relationships`)
-      .pipe(tap((relationships) => this.relationshipsSignal.set(relationships)));
+      .get<Page<DatasetRelationship>>(`${this.apiUrl}/${projectId}/relationships`)
+      .pipe(map((page) => page.content),
+        tap((relationships) => this.relationshipsSignal.set(relationships)));
   }
 
   confirmRelationship(

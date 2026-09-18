@@ -34,6 +34,34 @@ class TestSemanticRoleClassification:
         assert role == SemanticRole.IDENTIFIER
         assert confidence >= 0.9
 
+    def test_code_named_low_cardinality_is_categorical_not_identifier(self):
+        """An ID-looking *name* must not win over genuinely categorical data.
+
+        ``region_code`` has only 60 distinct values of 1500 rows (4%). The
+        ID_NAME_PATTERN matches ``_code``, but sub-5% cardinality means labels,
+        not identifiers — the name hint is only honored above the categorical
+        cardinality ratio.
+        """
+        df = pd.DataFrame(
+            {"region_code": [f"{i % 60:04d}" for i in range(1500)]}
+        )
+        series = df["region_code"]
+        detection = _detect_data_type(series)
+        role, confidence, _ = _classify_role("region_code", series, detection, 1500, 0)
+        assert role == SemanticRole.CATEGORICAL
+        assert confidence >= 0.8
+
+    def test_code_named_high_cardinality_is_identifier(self):
+        """An ID-looking name with real distinctness is still an identifier."""
+        df = pd.DataFrame(
+            {"product_code": [f"SKU-{i}" for i in range(500)]}
+        )
+        series = df["product_code"]
+        detection = _detect_data_type(series)
+        role, confidence, _ = _classify_role("product_code", series, detection, 500, 0)
+        assert role == SemanticRole.IDENTIFIER
+        assert confidence >= 0.9
+
     def test_datetime_column_is_temporal(self):
         """Column of dates → TEMPORAL regardless of cardinality."""
         df = pd.DataFrame({"date": pd.date_range("2024-01-01", periods=60, freq="D")})

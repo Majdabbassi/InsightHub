@@ -20,6 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -76,10 +78,12 @@ public class RelationshipService {
     // ===== Queries / CRUD =====
 
     @Transactional(readOnly = true)
-    public List<RelationshipResponse> list(String ownerEmail, Long projectId) {
+    public Page<RelationshipResponse> list(
+            String ownerEmail, Long projectId, Pageable pageable) {
         Project project = projectService.findOwnedProject(ownerEmail, projectId);
-        return relationshipRepository.findByProjectIdOrderByCreatedAtDesc(project.getId())
-                .stream().map(this::toResponse).toList();
+        return relationshipRepository
+                .findByProjectIdOrderByCreatedAtDesc(project.getId(), pageable)
+                .map(this::toResponse);
     }
 
     /** Ownership-checked entity lookup shared with the insights features. */

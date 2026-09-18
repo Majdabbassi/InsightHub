@@ -44,6 +44,9 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.coverage
+coverage.lcov
+htmlcov/
 
 # ===== Environment / secrets =====
 .env
