@@ -1,0 +1,58 @@
+# ===== General / OS =====
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+*.tmp
+
+# ===== Editors / IDEs =====
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.settings/
+.classpath
+.project
+
+# ===== Angular / Node (frontend) =====
+node_modules/
+dist/
+coverage/
+.angular/
+npm-debug.log*
+yarn-error.log
+package-lock.json.bak
+
+# ===== Spring Boot / Java (backend) =====
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+*.war
+*.ear
+hs_err_pid*
+.mvn/timing.properties
+
+# ===== Python (analytics-service) =====
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ===== Environment / secrets =====
+.env
+.env.local
+.env.*.local
+
+# ===== Docker =====
+*.pid
+.docker/
+
+# ===== Uploaded files =====
+uploads/

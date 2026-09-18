@@ -1,0 +1,119 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: data-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?MYSQL_DATABASE is required - copy .env.example to .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required - copy .env.example to .env}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: data-phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    ports:
+      - "8081:80"
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./backend
+    container_name: data-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      analytics-service:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8080
+      DB_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}
+      DB_NAME: ${MYSQL_DATABASE}
+      DB_USERNAME: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      ANALYTICS_SERVICE_URL: http://analytics-service:8000
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
+      # Generous read timeout: the first request after idle reloads the model.
+      OLLAMA_TIMEOUT_SECONDS: ${OLLAMA_TIMEOUT_SECONDS:-180}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required - set a strong secret (openssl rand -base64 64)}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-3600000}
+      FILE_STORAGE_PATH: /app/uploads
+    volumes:
+      - uploads-data:/app/uploads
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+
+  analytics-service:
+    build:
+      context: ./analytics-service
+    container_name: data-analytics
+    restart: unless-stopped
+    environment:
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "8000:8000"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: data-ollama
+    restart: unless-stopped
+    volumes:
+      - ollama-models:/root/.ollama
+    ports:
+      # Host mapping is for convenience only; Spring Boot reaches Ollama via
+      # the internal network at http://ollama:11434.
+      - "11434:11434"
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: data-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - analytics-service
+    ports:
+      - "4200:80"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  uploads-data:
+  ollama-models:
