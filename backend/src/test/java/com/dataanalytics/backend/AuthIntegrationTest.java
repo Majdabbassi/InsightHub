@@ -1,6 +1,5 @@
 package com.dataanalytics.backend;
 
-import com.dataanalytics.backend.repository.UserRepository;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +22,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AuthIntegrationTest {
 
     @Autowired private MockMvc mockMvc;
-    @Autowired private UserRepository userRepository;
 
     @Test
     void register_thenLogin_returnsJwtToken() throws Exception {
