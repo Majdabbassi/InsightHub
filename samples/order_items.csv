@@ -1,0 +1,354 @@
+order_item_id,order_id,product_name,product_category,unit_price,quantity
+OI-0001,ORD-10001,Yoga Mat,Sports,55.0,1
+OI-0002,ORD-10002,USB-C Hub,Electronics,120.0,3
+OI-0003,ORD-10002,4K Monitor,Electronics,25.0,2
+OI-0004,ORD-10003,Moisturizer,Beauty,18.0,4
+OI-0005,ORD-10003,Shampoo,Beauty,14.0,1
+OI-0006,ORD-10003,Face Serum,Beauty,14.0,1
+OI-0007,ORD-10004,Photo Frame,Home,24.0,4
+OI-0008,ORD-10004,Desk Lamp,Home,35.0,4
+OI-0009,ORD-10004,Candles,Home,35.0,4
+OI-0010,ORD-10005,Wireless Mouse,Electronics,299.0,2
+OI-0011,ORD-10005,Throw Pillow,Home,9.0,3
+OI-0012,ORD-10005,Photo Frame,Home,9.0,3
+OI-0013,ORD-10006,Self-Help,Books,16.0,1
+OI-0014,ORD-10006,Mystery,Books,29.0,4
+OI-0015,ORD-10007,Resistance Bands,Sports,8.0,4
+OI-0016,ORD-10007,Sci-Fi Novel,Books,19.0,4
+OI-0017,ORD-10008,Hoodie,Clothing,65.0,4
+OI-0018,ORD-10008,Cotton Tee,Clothing,19.0,4
+OI-0019,ORD-10009,Throw Pillow,Home,12.0,1
+OI-0020,ORD-10010,Shampoo,Beauty,18.0,4
+OI-0021,ORD-10010,Bluetooth Speaker,Electronics,25.0,3
+OI-0022,ORD-10010,4K Monitor,Electronics,25.0,2
+OI-0023,ORD-10011,Cookbook,Books,16.0,3
+OI-0024,ORD-10012,Resistance Bands,Sports,11.0,2
+OI-0025,ORD-10012,Jump Rope,Sports,11.0,1
+OI-0026,ORD-10012,Resistance Bands,Sports,22.0,2
+OI-0027,ORD-10013,Biography,Books,19.0,3
+OI-0028,ORD-10013,Cookbook,Books,13.0,4
+OI-0029,ORD-10014,Wireless Mouse,Electronics,25.0,2
+OI-0030,ORD-10015,4K Monitor,Electronics,49.0,3
+OI-0031,ORD-10015,4K Monitor,Electronics,120.0,1
+OI-0032,ORD-10016,Mechanical Keyboard,Electronics,25.0,1
+OI-0033,ORD-10017,Running Shorts,Clothing,28.0,4
+OI-0034,ORD-10017,Denim Jacket,Clothing,15.0,1
+OI-0035,ORD-10018,Resistance Bands,Sports,11.0,4
+OI-0036,ORD-10018,Resistance Bands,Sports,22.0,2
+OI-0037,ORD-10019,Wireless Mouse,Electronics,49.0,3
+OI-0038,ORD-10019,Hoodie,Clothing,42.0,3
+OI-0039,ORD-10020,Bluetooth Speaker,Electronics,49.0,2
+OI-0040,ORD-10021,Denim Jacket,Clothing,15.0,3
+OI-0041,ORD-10021,Cotton Tee,Clothing,28.0,1
+OI-0042,ORD-10022,Photo Frame,Home,18.0,4
+OI-0043,ORD-10022,Candles,Home,24.0,1
+OI-0044,ORD-10023,Shampoo,Beauty,34.0,4
+OI-0045,ORD-10023,Shampoo,Beauty,18.0,4
+OI-0046,ORD-10024,Canvas Belt,Clothing,28.0,1
+OI-0047,ORD-10025,Biography,Books,29.0,3
+OI-0048,ORD-10025,Wireless Mouse,Electronics,120.0,1
+OI-0049,ORD-10026,Resistance Bands,Sports,15.0,2
+OI-0050,ORD-10026,Dumbbell Set,Sports,15.0,2
+OI-0051,ORD-10026,Dumbbell Set,Sports,22.0,2
+OI-0052,ORD-10027,Canvas Belt,Clothing,15.0,4
+OI-0053,ORD-10027,Canvas Belt,Clothing,15.0,3
+OI-0054,ORD-10027,Biography,Books,29.0,4
+OI-0055,ORD-10028,4K Monitor,Electronics,299.0,1
+OI-0056,ORD-10029,Shampoo,Beauty,6.0,4
+OI-0057,ORD-10029,Shampoo,Beauty,12.0,1
+OI-0058,ORD-10030,Mechanical Keyboard,Electronics,120.0,4
+OI-0059,ORD-10030,Sunscreen,Beauty,18.0,4
+OI-0060,ORD-10030,Face Serum,Beauty,12.0,4
+OI-0061,ORD-10031,Moisturizer,Beauty,6.0,1
+OI-0062,ORD-10031,Shampoo,Beauty,18.0,2
+OI-0063,ORD-10031,Lip Balm,Beauty,6.0,2
+OI-0064,ORD-10032,Biography,Books,21.0,4
+OI-0065,ORD-10032,Mystery,Books,16.0,3
+OI-0066,ORD-10033,Canvas Belt,Clothing,28.0,3
+OI-0067,ORD-10034,Sunscreen,Beauty,34.0,3
+OI-0068,ORD-10034,Face Serum,Beauty,12.0,3
+OI-0069,ORD-10035,Candles,Home,12.0,1
+OI-0070,ORD-10035,Candles,Home,24.0,2
+OI-0071,ORD-10035,Photo Frame,Home,35.0,4
+OI-0072,ORD-10036,Shampoo,Beauty,12.0,2
+OI-0073,ORD-10036,Candles,Home,12.0,2
+OI-0074,ORD-10036,Cotton Tee,Clothing,42.0,1
+OI-0075,ORD-10037,Sunscreen,Beauty,18.0,3
+OI-0076,ORD-10037,Face Serum,Beauty,14.0,4
+OI-0077,ORD-10037,Face Serum,Beauty,14.0,2
+OI-0078,ORD-10038,Bluetooth Speaker,Electronics,299.0,2
+OI-0079,ORD-10038,Shampoo,Beauty,6.0,2
+OI-0080,ORD-10038,4K Monitor,Electronics,89.0,2
+OI-0081,ORD-10039,Canvas Belt,Clothing,28.0,4
+OI-0082,ORD-10039,Running Shorts,Clothing,15.0,4
+OI-0083,ORD-10040,Mechanical Keyboard,Electronics,49.0,3
+OI-0084,ORD-10041,Hoodie,Clothing,15.0,1
+OI-0085,ORD-10042,Moisturizer,Beauty,12.0,1
+OI-0086,ORD-10042,Shampoo,Beauty,6.0,2
+OI-0087,ORD-10042,Moisturizer,Beauty,34.0,4
+OI-0088,ORD-10043,Yoga Mat,Sports,8.0,3
+OI-0089,ORD-10043,Desk Lamp,Home,24.0,2
+OI-0090,ORD-10044,Wireless Mouse,Electronics,299.0,2
+OI-0091,ORD-10045,Lip Balm,Beauty,34.0,4
+OI-0092,ORD-10046,Cotton Tee,Clothing,19.0,3
+OI-0093,ORD-10046,Denim Jacket,Clothing,15.0,4
+OI-0094,ORD-10047,Dumbbell Set,Sports,15.0,1
+OI-0095,ORD-10048,Jump Rope,Sports,8.0,1
+OI-0096,ORD-10049,Running Shorts,Clothing,15.0,1
+OI-0097,ORD-10050,USB-C Hub,Electronics,49.0,3
+OI-0098,ORD-10050,Mechanical Keyboard,Electronics,299.0,2
+OI-0099,ORD-10050,USB-C Hub,Electronics,25.0,3
+OI-0100,ORD-10051,Sunscreen,Beauty,14.0,1
+OI-0101,ORD-10052,Bluetooth Speaker,Electronics,299.0,3
+OI-0102,ORD-10052,4K Monitor,Electronics,25.0,3
+OI-0103,ORD-10053,Yoga Mat,Sports,11.0,3
+OI-0104,ORD-10054,Jump Rope,Sports,15.0,2
+OI-0105,ORD-10055,Self-Help,Books,29.0,2
+OI-0106,ORD-10055,Self-Help,Books,16.0,3
+OI-0107,ORD-10055,Cookbook,Books,16.0,3
+OI-0108,ORD-10056,Photo Frame,Home,18.0,3
+OI-0109,ORD-10056,Ceramic Mug,Home,24.0,3
+OI-0110,ORD-10057,Throw Pillow,Home,35.0,3
+OI-0111,ORD-10058,Self-Help,Books,21.0,3
+OI-0112,ORD-10058,Water Bottle,Sports,15.0,3
+OI-0113,ORD-10059,Cotton Tee,Clothing,28.0,2
+OI-0114,ORD-10060,Yoga Mat,Sports,22.0,3
+OI-0115,ORD-10060,Resistance Bands,Sports,8.0,4
+OI-0116,ORD-10060,Water Bottle,Sports,15.0,4
+OI-0117,ORD-10061,Resistance Bands,Sports,11.0,4
+OI-0118,ORD-10062,Moisturizer,Beauty,18.0,4
+OI-0119,ORD-10062,Face Serum,Beauty,18.0,2
+OI-0120,ORD-10063,Running Shorts,Clothing,19.0,2
+OI-0121,ORD-10063,Hoodie,Clothing,42.0,4
+OI-0122,ORD-10063,Mechanical Keyboard,Electronics,49.0,4
+OI-0123,ORD-10064,Wireless Mouse,Electronics,120.0,2
+OI-0124,ORD-10064,Bluetooth Speaker,Electronics,299.0,3
+OI-0125,ORD-10065,USB-C Hub,Electronics,89.0,4
+OI-0126,ORD-10066,4K Monitor,Electronics,89.0,2
+OI-0127,ORD-10066,Candles,Home,12.0,1
+OI-0128,ORD-10066,Wireless Mouse,Electronics,89.0,2
+OI-0129,ORD-10067,Cotton Tee,Clothing,42.0,3
+OI-0130,ORD-10067,Canvas Belt,Clothing,15.0,3
+OI-0131,ORD-10067,Denim Jacket,Clothing,42.0,2
+OI-0132,ORD-10068,Denim Jacket,Clothing,28.0,1
+OI-0133,ORD-10069,Shampoo,Beauty,6.0,2
+OI-0134,ORD-10069,Moisturizer,Beauty,18.0,3
+OI-0135,ORD-10070,Self-Help,Books,13.0,4
+OI-0136,ORD-10070,Canvas Belt,Clothing,19.0,2
+OI-0137,ORD-10071,Self-Help,Books,21.0,3
+OI-0138,ORD-10071,Mystery,Books,13.0,2
+OI-0139,ORD-10072,Wireless Mouse,Electronics,25.0,2
+OI-0140,ORD-10073,Hoodie,Clothing,65.0,3
+OI-0141,ORD-10073,Shampoo,Beauty,18.0,3
+OI-0142,ORD-10074,Mechanical Keyboard,Electronics,299.0,2
+OI-0143,ORD-10075,Sunscreen,Beauty,18.0,2
+OI-0144,ORD-10075,Sunscreen,Beauty,34.0,2
+OI-0145,ORD-10075,Sunscreen,Beauty,12.0,1
+OI-0146,ORD-10076,Jump Rope,Sports,15.0,2
+OI-0147,ORD-10077,Yoga Mat,Sports,8.0,3
+OI-0148,ORD-10077,Resistance Bands,Sports,8.0,2
+OI-0149,ORD-10077,Water Bottle,Sports,15.0,4
+OI-0150,ORD-10078,Dumbbell Set,Sports,8.0,4
+OI-0151,ORD-10079,Shampoo,Beauty,14.0,2
+OI-0152,ORD-10079,Shampoo,Beauty,12.0,4
+OI-0153,ORD-10080,Canvas Belt,Clothing,15.0,1
+OI-0154,ORD-10081,Desk Lamp,Home,24.0,4
+OI-0155,ORD-10081,Desk Lamp,Home,35.0,3
+OI-0156,ORD-10082,Dumbbell Set,Sports,55.0,3
+OI-0157,ORD-10082,Biography,Books,29.0,2
+OI-0158,ORD-10083,Water Bottle,Sports,15.0,4
+OI-0159,ORD-10083,Running Shorts,Clothing,15.0,4
+OI-0160,ORD-10084,4K Monitor,Electronics,25.0,1
+OI-0161,ORD-10085,Running Shorts,Clothing,42.0,1
+OI-0162,ORD-10085,Running Shorts,Clothing,65.0,3
+OI-0163,ORD-10086,Self-Help,Books,19.0,1
+OI-0164,ORD-10086,Mystery,Books,13.0,2
+OI-0165,ORD-10086,Biography,Books,16.0,4
+OI-0166,ORD-10087,Photo Frame,Home,24.0,1
+OI-0167,ORD-10087,Desk Lamp,Home,18.0,3
+OI-0168,ORD-10087,Throw Pillow,Home,9.0,3
+OI-0169,ORD-10088,Mystery,Books,21.0,1
+OI-0170,ORD-10089,4K Monitor,Electronics,89.0,4
+OI-0171,ORD-10090,Sunscreen,Beauty,34.0,3
+OI-0172,ORD-10091,Water Bottle,Sports,11.0,3
+OI-0173,ORD-10091,Jump Rope,Sports,11.0,4
+OI-0174,ORD-10091,Resistance Bands,Sports,8.0,1
+OI-0175,ORD-10092,Cotton Tee,Clothing,28.0,3
+OI-0176,ORD-10092,Cotton Tee,Clothing,15.0,4
+OI-0177,ORD-10093,Sunscreen,Beauty,34.0,1
+OI-0178,ORD-10093,Dumbbell Set,Sports,11.0,4
+OI-0179,ORD-10094,Ceramic Mug,Home,35.0,1
+OI-0180,ORD-10095,Resistance Bands,Sports,8.0,2
+OI-0181,ORD-10096,Candles,Home,9.0,4
+OI-0182,ORD-10096,Sci-Fi Novel,Books,29.0,2
+OI-0183,ORD-10097,Lip Balm,Beauty,14.0,4
+OI-0184,ORD-10097,Face Serum,Beauty,6.0,3
+OI-0185,ORD-10097,Shampoo,Beauty,14.0,4
+OI-0186,ORD-10098,Photo Frame,Home,24.0,2
+OI-0187,ORD-10099,USB-C Hub,Electronics,89.0,3
+OI-0188,ORD-10099,Mechanical Keyboard,Electronics,299.0,3
+OI-0189,ORD-10100,Photo Frame,Home,18.0,4
+OI-0190,ORD-10101,Hoodie,Clothing,19.0,3
+OI-0191,ORD-10101,4K Monitor,Electronics,89.0,3
+OI-0192,ORD-10102,Denim Jacket,Clothing,15.0,3
+OI-0193,ORD-10102,Biography,Books,29.0,1
+OI-0194,ORD-10102,Canvas Belt,Clothing,65.0,2
+OI-0195,ORD-10103,Mystery,Books,29.0,2
+OI-0196,ORD-10104,Shampoo,Beauty,6.0,1
+OI-0197,ORD-10105,Cotton Tee,Clothing,15.0,2
+OI-0198,ORD-10105,Running Shorts,Clothing,28.0,2
+OI-0199,ORD-10105,Hoodie,Clothing,42.0,3
+OI-0200,ORD-10106,Wireless Mouse,Electronics,120.0,2
+OI-0201,ORD-10106,Wireless Mouse,Electronics,49.0,4
+OI-0202,ORD-10106,Cotton Tee,Clothing,28.0,4
+OI-0203,ORD-10107,Desk Lamp,Home,35.0,3
+OI-0204,ORD-10108,Throw Pillow,Home,24.0,4
+OI-0205,ORD-10108,Sunscreen,Beauty,6.0,2
+OI-0206,ORD-10108,Resistance Bands,Sports,55.0,1
+OI-0207,ORD-10109,Lip Balm,Beauty,12.0,2
+OI-0208,ORD-10109,Shampoo,Beauty,12.0,2
+OI-0209,ORD-10110,Running Shorts,Clothing,28.0,3
+OI-0210,ORD-10111,Moisturizer,Beauty,34.0,2
+OI-0211,ORD-10112,Face Serum,Beauty,18.0,3
+OI-0212,ORD-10112,Lip Balm,Beauty,12.0,3
+OI-0213,ORD-10113,Mechanical Keyboard,Electronics,25.0,3
+OI-0214,ORD-10113,USB-C Hub,Electronics,25.0,1
+OI-0215,ORD-10114,Running Shorts,Clothing,15.0,3
+OI-0216,ORD-10114,Hoodie,Clothing,42.0,2
+OI-0217,ORD-10115,Dumbbell Set,Sports,8.0,3
+OI-0218,ORD-10116,Self-Help,Books,13.0,2
+OI-0219,ORD-10116,Mystery,Books,16.0,4
+OI-0220,ORD-10117,Sci-Fi Novel,Books,13.0,1
+OI-0221,ORD-10117,Mystery,Books,13.0,2
+OI-0222,ORD-10117,Cookbook,Books,29.0,3
+OI-0223,ORD-10118,Ceramic Mug,Home,9.0,4
+OI-0224,ORD-10118,Photo Frame,Home,18.0,1
+OI-0225,ORD-10118,Photo Frame,Home,18.0,4
+OI-0226,ORD-10119,Self-Help,Books,19.0,1
+OI-0227,ORD-10119,Sci-Fi Novel,Books,29.0,1
+OI-0228,ORD-10119,Biography,Books,16.0,1
+OI-0229,ORD-10120,Yoga Mat,Sports,15.0,4
+OI-0230,ORD-10121,Bluetooth Speaker,Electronics,299.0,4
+OI-0231,ORD-10122,Water Bottle,Sports,22.0,2
+OI-0232,ORD-10122,Hoodie,Clothing,19.0,2
+OI-0233,ORD-10123,Denim Jacket,Clothing,65.0,1
+OI-0234,ORD-10123,Hoodie,Clothing,28.0,4
+OI-0235,ORD-10123,Denim Jacket,Clothing,65.0,4
+OI-0236,ORD-10124,Face Serum,Beauty,18.0,1
+OI-0237,ORD-10124,Lip Balm,Beauty,14.0,1
+OI-0238,ORD-10125,Desk Lamp,Home,9.0,1
+OI-0239,ORD-10126,Yoga Mat,Sports,55.0,1
+OI-0240,ORD-10126,Dumbbell Set,Sports,11.0,2
+OI-0241,ORD-10127,4K Monitor,Electronics,49.0,3
+OI-0242,ORD-10128,Resistance Bands,Sports,55.0,3
+OI-0243,ORD-10128,Mystery,Books,29.0,4
+OI-0244,ORD-10128,Yoga Mat,Sports,11.0,2
+OI-0245,ORD-10129,Canvas Belt,Clothing,28.0,1
+OI-0246,ORD-10129,Self-Help,Books,13.0,3
+OI-0247,ORD-10129,Running Shorts,Clothing,65.0,3
+OI-0248,ORD-10130,Mechanical Keyboard,Electronics,89.0,2
+OI-0249,ORD-10130,4K Monitor,Electronics,49.0,4
+OI-0250,ORD-10131,Self-Help,Books,13.0,2
+OI-0251,ORD-10132,Denim Jacket,Clothing,42.0,1
+OI-0252,ORD-10132,Desk Lamp,Home,9.0,2
+OI-0253,ORD-10133,Mechanical Keyboard,Electronics,120.0,1
+OI-0254,ORD-10134,Photo Frame,Home,9.0,2
+OI-0255,ORD-10135,Resistance Bands,Sports,15.0,1
+OI-0256,ORD-10135,Dumbbell Set,Sports,22.0,4
+OI-0257,ORD-10136,Denim Jacket,Clothing,28.0,2
+OI-0258,ORD-10137,Shampoo,Beauty,6.0,4
+OI-0259,ORD-10137,Shampoo,Beauty,12.0,3
+OI-0260,ORD-10137,Lip Balm,Beauty,6.0,1
+OI-0261,ORD-10138,Biography,Books,29.0,3
+OI-0262,ORD-10138,Sci-Fi Novel,Books,13.0,2
+OI-0263,ORD-10138,Sci-Fi Novel,Books,19.0,4
+OI-0264,ORD-10139,Shampoo,Beauty,34.0,4
+OI-0265,ORD-10139,Face Serum,Beauty,6.0,3
+OI-0266,ORD-10140,Lip Balm,Beauty,6.0,4
+OI-0267,ORD-10140,Shampoo,Beauty,34.0,2
+OI-0268,ORD-10141,Dumbbell Set,Sports,11.0,1
+OI-0269,ORD-10141,Yoga Mat,Sports,22.0,1
+OI-0270,ORD-10141,Dumbbell Set,Sports,22.0,2
+OI-0271,ORD-10142,Running Shorts,Clothing,42.0,1
+OI-0272,ORD-10143,Jump Rope,Sports,8.0,4
+OI-0273,ORD-10143,Jump Rope,Sports,11.0,4
+OI-0274,ORD-10143,Jump Rope,Sports,15.0,3
+OI-0275,ORD-10144,Bluetooth Speaker,Electronics,49.0,1
+OI-0276,ORD-10145,USB-C Hub,Electronics,49.0,3
+OI-0277,ORD-10146,Self-Help,Books,16.0,3
+OI-0278,ORD-10146,Jump Rope,Sports,55.0,2
+OI-0279,ORD-10147,Sci-Fi Novel,Books,16.0,1
+OI-0280,ORD-10147,Self-Help,Books,13.0,4
+OI-0281,ORD-10148,Cookbook,Books,16.0,4
+OI-0282,ORD-10149,Throw Pillow,Home,9.0,1
+OI-0283,ORD-10149,USB-C Hub,Electronics,49.0,4
+OI-0284,ORD-10150,Moisturizer,Beauty,12.0,1
+OI-0285,ORD-10150,Shampoo,Beauty,18.0,2
+OI-0286,ORD-10151,Lip Balm,Beauty,18.0,3
+OI-0287,ORD-10151,Face Serum,Beauty,14.0,4
+OI-0288,ORD-10151,Sunscreen,Beauty,12.0,4
+OI-0289,ORD-10152,Cotton Tee,Clothing,15.0,3
+OI-0290,ORD-10152,Running Shorts,Clothing,65.0,1
+OI-0291,ORD-10152,Canvas Belt,Clothing,15.0,4
+OI-0292,ORD-10153,4K Monitor,Electronics,89.0,4
+OI-0293,ORD-10153,Mechanical Keyboard,Electronics,89.0,4
+OI-0294,ORD-10154,Candles,Home,35.0,3
+OI-0295,ORD-10155,Cotton Tee,Clothing,42.0,2
+OI-0296,ORD-10156,Face Serum,Beauty,6.0,3
+OI-0297,ORD-10156,Moisturizer,Beauty,18.0,3
+OI-0298,ORD-10157,Resistance Bands,Sports,22.0,2
+OI-0299,ORD-10157,Water Bottle,Sports,8.0,4
+OI-0300,ORD-10158,Resistance Bands,Sports,11.0,1
+OI-0301,ORD-10159,Shampoo,Beauty,6.0,1
+OI-0302,ORD-10159,Lip Balm,Beauty,18.0,2
+OI-0303,ORD-10159,Face Serum,Beauty,6.0,2
+OI-0304,ORD-10160,Biography,Books,21.0,2
+OI-0305,ORD-10161,Biography,Books,21.0,3
+OI-0306,ORD-10162,Hoodie,Clothing,42.0,2
+OI-0307,ORD-10162,Running Shorts,Clothing,15.0,2
+OI-0308,ORD-10163,Hoodie,Clothing,19.0,4
+OI-0309,ORD-10163,Canvas Belt,Clothing,28.0,3
+OI-0310,ORD-10164,Mechanical Keyboard,Electronics,49.0,3
+OI-0311,ORD-10164,USB-C Hub,Electronics,89.0,3
+OI-0312,ORD-10165,Throw Pillow,Home,18.0,2
+OI-0313,ORD-10166,Candles,Home,24.0,1
+OI-0314,ORD-10166,Canvas Belt,Clothing,15.0,2
+OI-0315,ORD-10167,Sci-Fi Novel,Books,21.0,2
+OI-0316,ORD-10167,Biography,Books,16.0,4
+OI-0317,ORD-10167,Cookbook,Books,19.0,2
+OI-0318,ORD-10168,Lip Balm,Beauty,6.0,1
+OI-0319,ORD-10168,Sunscreen,Beauty,6.0,4
+OI-0320,ORD-10169,Self-Help,Books,13.0,1
+OI-0321,ORD-10169,Biography,Books,13.0,1
+OI-0322,ORD-10169,Cookbook,Books,19.0,2
+OI-0323,ORD-10170,Photo Frame,Home,18.0,3
+OI-0324,ORD-10170,Yoga Mat,Sports,22.0,1
+OI-0325,ORD-10170,Photo Frame,Home,9.0,2
+OI-0326,ORD-10171,Water Bottle,Sports,11.0,2
+OI-0327,ORD-10171,Yoga Mat,Sports,8.0,1
+OI-0328,ORD-10172,Sci-Fi Novel,Books,16.0,2
+OI-0329,ORD-10172,Biography,Books,21.0,2
+OI-0330,ORD-10173,Water Bottle,Sports,22.0,4
+OI-0331,ORD-10173,Water Bottle,Sports,15.0,1
+OI-0332,ORD-10173,Yoga Mat,Sports,22.0,3
+OI-0333,ORD-10174,Denim Jacket,Clothing,65.0,2
+OI-0334,ORD-10174,Hoodie,Clothing,15.0,4
+OI-0335,ORD-10174,Running Shorts,Clothing,65.0,2
+OI-0336,ORD-10175,Candles,Home,35.0,2
+OI-0337,ORD-10175,Candles,Home,18.0,1
+OI-0338,ORD-10175,Ceramic Mug,Home,24.0,1
+OI-0339,ORD-10176,Jump Rope,Sports,55.0,3
+OI-0340,ORD-10176,Water Bottle,Sports,22.0,3
+OI-0341,ORD-10176,Water Bottle,Sports,11.0,3
+OI-0342,ORD-10177,Candles,Home,9.0,1
+OI-0343,ORD-10177,Candles,Home,9.0,2
+OI-0344,ORD-10177,Throw Pillow,Home,9.0,1
+OI-0345,ORD-10178,Moisturizer,Beauty,34.0,3
+OI-0346,ORD-10178,Shampoo,Beauty,34.0,4
+OI-0347,ORD-10178,Face Serum,Beauty,14.0,4
+OI-0348,ORD-10179,Sunscreen,Beauty,34.0,2
+OI-0349,ORD-10179,Face Serum,Beauty,34.0,3
+OI-0350,ORD-10180,Throw Pillow,Home,35.0,4
+OI-0351,ORD-10180,Candles,Home,9.0,4
+OI-0352,ORD-10029,Lip Balm,Beauty,6.0,4
+OI-0353,ORD-10029,Sunscreen,Beauty,18.0,2

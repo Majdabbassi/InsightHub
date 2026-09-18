@@ -22,6 +22,7 @@ services:
   phpmyadmin:
     image: phpmyadmin:latest
     container_name: data-phpmyadmin
+    profiles: ["tools"]
     restart: unless-stopped
     depends_on:
       mysql:
