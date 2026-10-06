@@ -7,7 +7,7 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE:?MYSQL_DATABASE is required - copy .env.example to .env}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required - copy .env.example to .env}
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
     networks:
@@ -31,7 +31,7 @@ services:
       PMA_HOST: mysql
       PMA_PORT: 3306
     ports:
-      - "8081:80"
+      - "127.0.0.1:8081:80"
     networks:
       - app-network
 
@@ -62,7 +62,7 @@ services:
     volumes:
       - uploads-data:/app/uploads
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     networks:
       - app-network
 
@@ -74,7 +74,7 @@ services:
     environment:
       LOG_LEVEL: ${LOG_LEVEL:-info}
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     networks:
       - app-network
     healthcheck:
@@ -93,7 +93,7 @@ services:
     ports:
       # Host mapping is for convenience only; Spring Boot reaches Ollama via
       # the internal network at http://ollama:11434.
-      - "11434:11434"
+      - "127.0.0.1:11434:11434"
     networks:
       - app-network
 
@@ -106,7 +106,7 @@ services:
       - backend
       - analytics-service
     ports:
-      - "4200:80"
+      - "127.0.0.1:4200:80"
     networks:
       - app-network
 

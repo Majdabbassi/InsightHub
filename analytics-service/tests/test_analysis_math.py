@@ -18,7 +18,7 @@ from analysis import (
     Detection,
 )
 from schemas import SemanticRole, DataQualityGrade
-from duckdb_query import validate_sql, QueryValidationError, sanitize_name
+from duckdb_query import execute_query, validate_sql, QueryValidationError, sanitize_name
 
 
 # ── Semantic role classification ──────────────────────────────────────────
@@ -297,3 +297,24 @@ class TestDuckDbSandbox:
 
     def test_sanitize_name_preserves_alphanumeric(self):
         assert sanitize_name("orders.csv") == "orders"
+
+
+class TestQuerySandbox:
+    """Regression: the text checks could be slipped past with a comment between FROM and a table function,
+    which let a query read files inside the container. The engine itself now refuses any file access."""
+
+    CSV = {"orders": b"id,amount\n1,10\n2,32\n"}
+
+    def test_queries_on_the_datasets_still_work(self):
+        result = execute_query("SELECT SUM(amount) AS total FROM orders", self.CSV)
+        assert result["success"] is True
+        assert result["rows"] == [[42]]
+
+    @pytest.mark.parametrize("sql", [
+        "SELECT * FROM/**/read_text('/etc/hostname')",
+        "SELECT * FROM orders, (SELECT 1 FROM '/etc/hostname')",
+    ])
+    def test_the_engine_cannot_read_local_files(self, sql):
+        result = execute_query(sql, self.CSV)
+        assert result["success"] is False
+        assert "hostname" not in str(result.get("rows"))
