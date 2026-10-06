@@ -1,5 +1,9 @@
 """Safe read-only SQL execution over uploaded dataset files using DuckDB.
 
+The engine runs with external access disabled and its configuration locked, so a query can only ever see the
+datasets handed to it: no local files, no network, no extensions. The keyword and table checks below are only
+there to give clear error messages.
+
 The Spring backend forwards an LLM-proposed SELECT query plus the CSV bytes
 of the datasets it references. Everything here is defense in depth: the query
 must start with SELECT/WITH, must not contain mutation keywords, must be a
@@ -133,6 +137,10 @@ def execute_query(sql: str, tables: dict[str, bytes]) -> dict[str, Any]:
             try:
                 for name, frame in frames.items():
                     connection.register(name, frame)
+                # The real boundary: the text checks above can be fooled (comments, quoted names), so once the
+                # datasets are registered the engine loses all file and network access, for good.
+                connection.execute("SET enable_external_access = false")
+                connection.execute("SET lock_configuration = true")
                 cursor = connection.execute(wrapped)
                 columns = [description[0] for description in cursor.description]
                 rows = [
