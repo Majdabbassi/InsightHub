@@ -9,7 +9,7 @@ Statistical work (column quality, cleaning suggestions, trend/outlier detection,
 ## Decision
 
 - A separate Python service (`analytics-service/`): FastAPI + DuckDB + pandas.
-- DuckDB reads CSV files directly off disk (`CsvSupport`/`SqlTableNames`); no data is copied to the analytics service; only JSON results cross the wire.
+- The analytics service is stateless and has no access to the upload volume: for each call, Spring streams the stored CSV to it as a multipart upload (`AnalyticsClient`), and only JSON results come back. For AI queries, DuckDB registers that uploaded CSV in an in-memory database under a sanitized table name (`SqlTableNames` in Spring, `sanitize_name` in Python).
 - Spring calls it via `AnalyticsClient` with bounded retries and maps service failures to `AnalyticsServiceUnavailableException` (→ HTTP 503, friendly frontend message).
 - The frontend never calls the analytics-service directly.
 
@@ -18,4 +18,5 @@ Statistical work (column quality, cleaning suggestions, trend/outlier detection,
 - Frontend/backend latency is protected from analytics work; the analytics service can be scaled out independently.
 - Two deployment units plus Ollama → `docker-compose.yml` orchestrates all three.
 - Failure modes are explicit: 503 surfaces in the UI as "analytics service temporarily unavailable".
-- Requires keeping `CsvSupport` (column-name sanitization, file lookup) in sync between backend and analytics-service.
+- Requires keeping the table-name sanitizing (`SqlTableNames` / `sanitize_name`) in sync between backend and analytics-service.
+- Every analysis re-sends the file; fine for the CSV sizes this app accepts (20 MB upload limit), but a shared object store would avoid the copy for large files.
